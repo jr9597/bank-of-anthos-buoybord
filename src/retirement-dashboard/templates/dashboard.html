@@ -1,0 +1,467 @@
+<!--
+Copyright 2025 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Financial Health Overview -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="material-icons me-2">health_and_safety</i>
+                    Financial Health Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="health-score" data-score="{{ analysis.health_score }}">
+                                <span class="score-value">{{ analysis.health_score }}</span>
+                            </div>
+                            <h6 class="mt-2">Health Score</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="metric-card">
+                                    <h6>Current Balance</h6>
+                                    <h4 class="text-success">${{ "{:,.2f}".format(financial_data.current_balance or 0) }}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="metric-card">
+                                    <h6>Monthly Savings</h6>
+                                    <h4 class="text-info">${{ "{:,.2f}".format(analysis.monthly_savings or 0) }}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="metric-card">
+                                    <h6>Savings Rate</h6>
+                                    <h4 class="text-primary">{{ analysis.savings_rate }}%</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="metric-card">
+                                    <h6>Emergency Fund</h6>
+                                    <h4 class="text-warning">{{ analysis.emergency_fund_months }} months</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI-Powered Retirement Advice -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="material-icons me-2">psychology</i>
+                    AI-Powered Retirement Advice
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <strong>AI Insights:</strong> {{ retirement_advice.summary }}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Recommendations</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for recommendation in retirement_advice.recommendations %}
+                            <li class="list-group-item">
+                                <i class="material-icons text-success me-2">check_circle</i>
+                                {{ recommendation }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Action Items</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for action in retirement_advice.action_items %}
+                            <li class="list-group-item">
+                                <i class="material-icons text-warning me-2">task_alt</i>
+                                {{ action }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        Risk Assessment: <strong>{{ retirement_advice.risk_assessment }}</strong> | 
+                        Confidence: {{ retirement_advice.confidence_score }}%
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Retirement Scenario Calculator -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="material-icons me-2">calculate</i>
+                    Retirement Scenario Calculator
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="scenarioForm">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="currentAge" class="form-label">Current Age</label>
+                            <input type="number" class="form-control" id="currentAge" value="30" min="18" max="65">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="retirementAge" class="form-label">Retirement Age</label>
+                            <input type="number" class="form-control" id="retirementAge" value="65" min="50" max="75">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="monthlySavings" class="form-label">Monthly Savings</label>
+                            <input type="number" class="form-control" id="monthlySavings" value="{{ analysis.monthly_savings or 500 }}" min="0" step="50">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="expectedReturn" class="form-label">Expected Return (%)</label>
+                            <input type="number" class="form-control" id="expectedReturn" value="7" min="1" max="15" step="0.5">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="material-icons me-1">analytics</i>
+                                Calculate Projections
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <div id="projectionResults" class="mt-4" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h3 id="totalSavings" class="text-success">$0</h3>
+                                <p>Projected Retirement Fund</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h3 id="monthlyIncome" class="text-info">$0</h3>
+                                <p>Monthly Retirement Income</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h3 id="replacementRatio" class="text-primary">0%</h3>
+                                <p>Income Replacement Ratio</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <canvas id="projectionChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Career Growth Opportunities -->
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">
+                    <i class="material-icons me-2">trending_up</i>
+                    Career Growth Opportunities
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Income Potential</h6>
+                    <p>Average increase: <strong class="text-success">{{ job_recommendations.income_potential.average_increase }}%</strong></p>
+                    <p>High potential jobs: <strong>{{ job_recommendations.income_potential.high_potential_jobs }}</strong></p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Top Skills in Demand</h6>
+                    <div class="d-flex flex-wrap">
+                        {% for skill in job_recommendations.top_skills %}
+                        <span class="badge bg-secondary me-1 mb-1">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <button class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#jobsModal">
+                    <i class="material-icons me-1">work</i>
+                    View Job Recommendations
+                </button>
+            </div>
+        </div>
+
+        <!-- Goal Setting -->
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="material-icons me-2">flag</i>
+                    Retirement Goals
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="goalForm">
+                    <div class="mb-3">
+                        <label for="targetAmount" class="form-label">Target Retirement Amount</label>
+                        <input type="number" class="form-control" id="targetAmount" placeholder="1000000" min="100000" step="50000">
+                    </div>
+                    <div class="mb-3">
+                        <label for="targetAge" class="form-label">Target Retirement Age</label>
+                        <input type="number" class="form-control" id="targetAge" value="65" min="50" max="75">
+                    </div>
+                    <button type="submit" class="btn btn-secondary w-100">
+                        <i class="material-icons me-1">track_changes</i>
+                        Set Goal
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="material-icons me-2">insights</i>
+                    Quick Stats
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <strong>Account:</strong> {{ account_id }}
+                    </li>
+                    <li class="mb-2">
+                        <strong>Income:</strong> ${{ "{:,.0f}".format(financial_data.current_income or 0) }}/year
+                    </li>
+                    <li class="mb-2">
+                        <strong>Recommendations:</strong> {{ analysis.recommendations|length }}
+                    </li>
+                    <li class="mb-2">
+                        <strong>Job Opportunities:</strong> {{ job_recommendations.total_jobs }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Job Recommendations Modal -->
+<div class="modal fade" id="jobsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="material-icons me-2">work</i>
+                    Job Recommendations
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    {% for job in job_recommendations.jobs %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ job.title }}</h6>
+                                <p class="card-text">
+                                    <strong>{{ job.company }}</strong><br>
+                                    <small class="text-muted">{{ job.location }}</small>
+                                </p>
+                                <p class="card-text">
+                                    <strong class="text-success">${{ "{:,.0f}".format(job.avg_salary) }}</strong>
+                                    {% if job.income_increase_percent > 0 %}
+                                    <span class="badge bg-success">+{{ job.income_increase_percent }}%</span>
+                                    {% endif %}
+                                </p>
+                                <p class="card-text small">{{ job.description[:100] }}...</p>
+                                {% if job.url %}
+                                <a href="{{ job.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    View Job
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <hr>
+                
+                <h6>Career Path Suggestions</h6>
+                {% for path in job_recommendations.career_paths %}
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ path.title }}</h6>
+                        <p class="card-text">{{ path.description }}</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small><strong>Potential Income:</strong> ${{ path.potential_income }}</small>
+                            </div>
+                            <div class="col-md-6">
+                                <small><strong>Timeline:</strong> {{ path.timeline }}</small>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            {% for skill in path.key_skills %}
+                            <span class="badge bg-info me-1">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Initialize dashboard functionality
+document.addEventListener('DOMContentLoaded', function() {
+    initializeHealthScore();
+    initializeScenarioCalculator();
+    initializeGoalSetter();
+});
+
+function initializeHealthScore() {
+    const scoreElement = document.querySelector('.health-score');
+    const score = parseInt(scoreElement.dataset.score);
+    const scoreValue = scoreElement.querySelector('.score-value');
+    
+    // Add color based on score
+    if (score >= 80) {
+        scoreElement.classList.add('score-excellent');
+    } else if (score >= 60) {
+        scoreElement.classList.add('score-good');
+    } else if (score >= 40) {
+        scoreElement.classList.add('score-fair');
+    } else {
+        scoreElement.classList.add('score-poor');
+    }
+}
+
+function initializeScenarioCalculator() {
+    const form = document.getElementById('scenarioForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const data = {
+            current_age: parseInt(document.getElementById('currentAge').value),
+            retirement_age: parseInt(document.getElementById('retirementAge').value),
+            monthly_savings: parseFloat(document.getElementById('monthlySavings').value),
+            expected_return: parseFloat(document.getElementById('expectedReturn').value)
+        };
+        
+        try {
+            const response = await fetch('/api/scenario', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            displayProjectionResults(result.projections);
+        } catch (error) {
+            console.error('Error calculating scenario:', error);
+            alert('Error calculating retirement scenario. Please try again.');
+        }
+    });
+}
+
+function displayProjectionResults(projections) {
+    document.getElementById('totalSavings').textContent = 
+        '$' + projections.total_savings.toLocaleString();
+    document.getElementById('monthlyIncome').textContent = 
+        '$' + projections.monthly_income.toLocaleString();
+    document.getElementById('replacementRatio').textContent = 
+        projections.replacement_ratio + '%';
+    
+    document.getElementById('projectionResults').style.display = 'block';
+    
+    // Create chart
+    createProjectionChart(projections);
+}
+
+function createProjectionChart(projections) {
+    const ctx = document.getElementById('projectionChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Total Contributions', 'Investment Growth'],
+            datasets: [{
+                data: [projections.total_contributions, projections.investment_growth],
+                backgroundColor: ['#007bff', '#28a745'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function initializeGoalSetter() {
+    const form = document.getElementById('goalForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const data = {
+            target_amount: parseFloat(document.getElementById('targetAmount').value),
+            target_age: parseInt(document.getElementById('targetAge').value),
+            current_savings: {{ financial_data.current_balance or 0 }},
+            years_remaining: parseInt(document.getElementById('targetAge').value) - 30 // Estimate
+        };
+        
+        try {
+            const response = await fetch('/api/goals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            alert('Goal set successfully! Check the AI recommendations for guidance.');
+        } catch (error) {
+            console.error('Error setting goal:', error);
+            alert('Error setting goal. Please try again.');
+        }
+    });
+}
+</script>
+{% endblock %}

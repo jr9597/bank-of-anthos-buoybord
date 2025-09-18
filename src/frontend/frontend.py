@@ -613,6 +613,29 @@ def create_app():
         resp.delete_cookie(app.config['CONSENT_COOKIE'])
         return resp
 
+    @app.route('/retirement-dashboard', methods=['GET'])
+    def retirement_dashboard():
+        """
+        Redirect to the retirement dashboard microservice
+        """
+        token = request.cookies.get(app.config['TOKEN_NAME'])
+        if not verify_token(token):
+            # user isn't authenticated
+            app.logger.debug('User isn\'t authenticated. Redirecting to login page.')
+            return redirect(url_for('login_page',
+                                    _external=True,
+                                    _scheme=app.config['SCHEME']))
+        
+        # Get retirement dashboard URL from environment or use default
+        retirement_dashboard_url = os.getenv('RETIREMENT_DASHBOARD_URL', 'http://retirement-dashboard:8080')
+        
+        app.logger.info('Redirecting to retirement dashboard.')
+        
+        # Create response with redirect and pass the authentication token
+        resp = make_response(redirect(retirement_dashboard_url))
+        # The retirement dashboard will read the token from the cookie
+        return resp
+
     def decode_token(token):
         return jwt.decode(algorithms='RS256',
                           jwt=token,

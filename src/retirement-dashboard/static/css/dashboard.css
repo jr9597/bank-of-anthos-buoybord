@@ -1,0 +1,303 @@
+/*
+Copyright 2025 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/* Custom styles for the Retirement Dashboard */
+
+/* Health Score Styling */
+.health-score {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: 4px solid #e9ecef;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    transition: all 0.3s ease;
+}
+
+.health-score .score-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.score-excellent {
+    border-color: #28a745 !important;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+}
+
+.score-excellent .score-value {
+    color: #155724 !important;
+}
+
+.score-good {
+    border-color: #007bff !important;
+    background: linear-gradient(135deg, #cce5ff 0%, #b3d9ff 100%) !important;
+}
+
+.score-good .score-value {
+    color: #004085 !important;
+}
+
+.score-fair {
+    border-color: #ffc107 !important;
+    background: linear-gradient(135deg, #fff3cd 0%, #ffecb5 100%) !important;
+}
+
+.score-fair .score-value {
+    color: #856404 !important;
+}
+
+.score-poor {
+    border-color: #dc3545 !important;
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%) !important;
+}
+
+.score-poor .score-value {
+    color: #721c24 !important;
+}
+
+/* Metric Cards */
+.metric-card {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #007bff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card h6 {
+    margin-bottom: 0.5rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-card h4 {
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+/* Card Headers */
+.card-header {
+    border-radius: 0.375rem 0.375rem 0 0 !important;
+}
+
+.card-header h5 {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.card-header .material-icons {
+    font-size: 1.25rem;
+}
+
+/* AI Advice Styling */
+.alert-info {
+    border-left: 4px solid #17a2b8;
+    border-radius: 8px;
+}
+
+.list-group-item {
+    border: none;
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: flex-start;
+}
+
+.list-group-item .material-icons {
+    font-size: 1.1rem;
+    margin-top: 2px;
+}
+
+/* Form Styling */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Button Styling */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn .material-icons {
+    font-size: 1.1rem;
+}
+
+/* Badge Styling */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+}
+
+/* Modal Styling */
+.modal-header {
+    border-bottom: 2px solid #e9ecef;
+}
+
+.modal-title .material-icons {
+    font-size: 1.25rem;
+}
+
+/* Chart Container */
+#projectionChart {
+    max-height: 300px;
+}
+
+/* Navigation */
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.navbar-brand .material-icons {
+    font-size: 1.5rem;
+    vertical-align: middle;
+}
+
+.nav-link .material-icons {
+    font-size: 1.1rem;
+    vertical-align: middle;
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .metric-card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .health-score {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .health-score .score-value {
+        font-size: 1.2rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Animation for loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #007bff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Success states */
+.success-flash {
+    animation: flash-success 0.5s ease-in-out;
+}
+
+@keyframes flash-success {
+    0% { background-color: transparent; }
+    50% { background-color: rgba(40, 167, 69, 0.2); }
+    100% { background-color: transparent; }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Print styles */
+@media print {
+    .navbar, .modal, .btn, footer {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+    }
+    
+    .card-header {
+        background: #f8f9fa !important;
+        color: #495057 !important;
+    }
+}
