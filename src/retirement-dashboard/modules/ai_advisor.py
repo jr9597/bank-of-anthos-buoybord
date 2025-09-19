@@ -322,20 +322,21 @@ class AIAdvisor:
             }
         ]
     
-    def get_chat_response(self, message, financial_data=None):
+    def get_chat_response(self, message, financial_data=None, current_jobs=None):
         """
         Get AI chat response for retirement planning questions with personalized context.
         
         Args:
             message (str): User's question or message
             financial_data (dict): User's financial data for personalized advice
+            current_jobs (list): Current available jobs for context
             
         Returns:
             str: AI-generated response
         """
         try:
             if not self.google_ai_api_key:
-                return self._get_mock_chat_response(message, financial_data)
+                return self._get_mock_chat_response(message, financial_data, current_jobs)
             
             # Configure the Gemini API
             genai.configure(api_key=self.google_ai_api_key)
@@ -353,10 +354,33 @@ class AIAdvisor:
                 - Annual Income: ${financial_data.get('current_income', 0):,.2f}
                 """
             
+            # Add job context if available
+            jobs_context = ""
+            if current_jobs and len(current_jobs) > 0:
+                jobs_context = f"""
+                
+                Current Available Part-time Job Opportunities (up to $30k):
+                """
+                for i, job in enumerate(current_jobs[:5], 1):  # Show top 5 jobs in context
+                    salary_range = ""
+                    if job.get('salary_max', 0) > 0:
+                        salary_range = f"${job.get('salary_min', 0):,} - ${job.get('salary_max', 0):,}"
+                    elif job.get('salary_min', 0) > 0:
+                        salary_range = f"${job.get('salary_min', 0):,}+"
+                    else:
+                        salary_range = "Competitive"
+                    
+                    jobs_context += f"""
+                {i}. {job.get('title', 'Unknown')} at {job.get('company', 'Unknown Company')}
+                   - Salary: {salary_range}
+                   - Location: {job.get('location', 'Various')}
+                   - Description: {job.get('description', 'No description')[:100]}...
+                """
+            
             system_prompt = f"""You are a professional financial advisor specializing in retirement planning. 
             You provide helpful, accurate, and personalized advice about retirement savings, investment strategies, 
             and financial planning. Always be encouraging and provide actionable advice. Keep responses concise 
-            but informative and specific to the user's situation.{context}
+            but informative and specific to the user's situation.{context}{jobs_context}
             
             Base your advice on their actual financial situation when available. Provide specific numbers and actionable steps."""
             
@@ -372,7 +396,7 @@ class AIAdvisor:
             self.logger.error(f"Error getting AI chat response: {str(e)}")
             return self._get_mock_chat_response(message, financial_data)
     
-    def search_jobs_with_ai(self, message, financial_data=None):
+    def search_jobs_with_ai(self, message, financial_data=None, current_jobs=None):
         """
         Enhanced chat response that can search for jobs using Adzuna API as a tool.
         
@@ -391,7 +415,7 @@ class AIAdvisor:
             if not is_job_request:
                 # Regular chat response
                 return {
-                    'response': self.get_chat_response(message, financial_data),
+                    'response': self.get_chat_response(message, financial_data, current_jobs),
                     'jobs': None
                 }
             
@@ -489,7 +513,7 @@ class AIAdvisor:
             params = {
                 'app_id': self.adzuna_app_id,
                 'app_key': self.adzuna_app_key,
-                'what': f"remote part-time contract {criteria.get('query', 'software engineer developer')}",  # Focus on part-time/contract
+                'what': 'remote',       # Search for remote jobs specifically
                 'salary_min': 0,        # Start from $0 for part-time work
                 'salary_max': 30000,    # Cap at $30k for part-time jobs
                 'results_per_page': 8,
@@ -543,7 +567,7 @@ class AIAdvisor:
         else:
             return "I'd love to help you find career opportunities to boost your retirement savings! Try asking me about specific job types like 'software engineer jobs' or 'remote analyst positions' and I'll search for opportunities that match your income goals."
     
-    def _get_mock_chat_response(self, message, financial_data=None):
+    def _get_mock_chat_response(self, message, financial_data=None, current_jobs=None):
         """Get mock chat response when AI is not available"""
         # Simple keyword-based responses with financial context
         message_lower = message.lower()

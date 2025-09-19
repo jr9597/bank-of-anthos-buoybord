@@ -519,6 +519,54 @@ def get_user_financial_data(token, account_id):
     logger.info(f"Final financial data: {financial_data}")
     return financial_data
 
+def get_current_jobs_data():
+    """Fetch current job recommendations for AI context"""
+    try:
+        import requests
+        import os
+        
+        adzuna_app_id = os.getenv('ADZUNA_APP_ID')
+        adzuna_app_key = os.getenv('ADZUNA_APP_KEY')
+        
+        if not adzuna_app_id or not adzuna_app_key:
+            return []
+        
+        # Search for remote jobs with salary range $0-$30k - same as main endpoint
+        url = "https://api.adzuna.com/v1/api/jobs/us/search/1"
+        params = {
+            'app_id': adzuna_app_id,
+            'app_key': adzuna_app_key,
+            'what': 'remote',       # Search for remote jobs specifically
+            'salary_min': 0,
+            'salary_max': 30000,
+            'results_per_page': 15,  # Get subset for AI context
+            'sort_by': 'salary'
+        }
+        
+        response = requests.get(url, params=params, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            adzuna_jobs = data.get('results', [])
+            
+            jobs_data = []
+            for job in adzuna_jobs[:10]:  # Limit to 10 for AI context
+                jobs_data.append({
+                    'title': job.get('title', 'Unknown Title'),
+                    'company': job.get('company', {}).get('display_name', 'Unknown Company'),
+                    'description': job.get('description', '')[:200],  # Longer description for AI
+                    'salary_min': job.get('salary_min', 0),
+                    'salary_max': job.get('salary_max', 0),
+                    'location': job.get('location', {}).get('display_name', 'Various'),
+                    'posted': job.get('created', 'Recently posted')
+                })
+            
+            return jobs_data
+        
+    except Exception as e:
+        logger.error(f"Error fetching jobs for AI context: {e}")
+        return []
+
 @app.route('/api/chat', methods=['POST'])
 def chat_with_ai():
     """AI chat endpoint for retirement advice"""
@@ -557,8 +605,11 @@ def chat_with_ai():
                 'current_income': 90000
             }
         
-        # Get AI response with potential job search tool calling
-        ai_result = ai_advisor.search_jobs_with_ai(message, financial_data)
+        # Get current job opportunities for AI context
+        current_jobs = get_current_jobs_data()
+        
+        # Get AI response with financial data and job context
+        ai_result = ai_advisor.search_jobs_with_ai(message, financial_data, current_jobs)
         
         response_data = {
             'response': ai_result['response'],
@@ -604,76 +655,54 @@ def get_job_recommendations():
             if adzuna_app_id and adzuna_app_key:
                 logger.info(f"Making direct Adzuna API call with credentials")
                 
-                # Search for remote jobs suitable for additional retirement income
+                # Search for remote jobs with salary range $0-$30k
                 url = "https://api.adzuna.com/v1/api/jobs/us/search/1"
                 params = {
                     'app_id': adzuna_app_id,
                     'app_key': adzuna_app_key,
-                    'what': keywords,  # Keep it simple - filter for part-time/contract in results
+                    'what': 'remote',       # Search for remote jobs specifically
                     'salary_min': 0,        # Start from $0 for part-time work
                     'salary_max': 30000,    # Cap at $30k for part-time jobs
-                    'results_per_page': 15,  # Get more results to filter from
+                    'results_per_page': 30,  # Get up to 30 jobs
                     'sort_by': 'salary'
                 }
                 
-                # Only add location if it's not the default to avoid over-filtering
-                if location and location.lower() != 'remote':
-                    params['where'] = location
-                
                 response = requests.get(url, params=params, timeout=10)
                 logger.info(f"Adzuna API response: {response.status_code}")
+                logger.info(f"Adzuna API parameters: {params}")
                 
                 if response.status_code == 200:
                     data = response.json()
                     adzuna_jobs = data.get('results', [])
+                    logger.info(f"Found {len(adzuna_jobs)} jobs from Adzuna API with salary filter only")
                     
                     jobs = []
                     for job in adzuna_jobs:
-                        # Filter for jobs that mention remote or are tech-related
-                        job_title = job.get('title', '').lower()
-                        job_desc = job.get('description', '').lower()
-                        job_location = job.get('location', {}).get('display_name', '').lower()
+                        # No filtering - just format the jobs from Adzuna
+                        salary_min = job.get('salary_min', 0)
+                        salary_max = job.get('salary_max', 0)
                         
-                        # Prioritize part-time, contract, freelance, or remote jobs for additional income
-                        is_suitable_for_retirement = (
-                            'part-time' in job_title or 'part time' in job_title or
-                            'contract' in job_title or 'contract' in job_desc or
-                            'freelance' in job_title or 'freelance' in job_desc or
-                            'remote' in job_title or 'remote' in job_desc or
-                            'consultant' in job_title or 'consulting' in job_title or
-                            'engineer' in job_title or 'developer' in job_title or
-                            'analyst' in job_title or 'scientist' in job_title
-                        )
+                        if salary_max:
+                            salary_display = f"${salary_min:,.0f} - ${salary_max:,.0f}"
+                        elif salary_min:
+                            salary_display = f"${salary_min:,.0f}+"
+                        else:
+                            salary_display = "Competitive"
                         
-                        if is_suitable_for_retirement:
-                            salary_min = job.get('salary_min', 0)
-                            salary_max = job.get('salary_max', 0)
-                            
-                            if salary_max:
-                                salary_display = f"${salary_min:,.0f} - ${salary_max:,.0f}"
-                            elif salary_min:
-                                salary_display = f"${salary_min:,.0f}+"
-                            else:
-                                salary_display = "Competitive"
-                            
-                            # Determine if job is remote
-                            is_remote = 'remote' in job_title or 'remote' in job_desc
-                            location_display = 'Remote' if is_remote else job.get('location', {}).get('display_name', 'Various')
-                            
-                            jobs.append({
-                                'title': job.get('title', 'Unknown Title'),
-                                'company': job.get('company', {}).get('display_name', 'Unknown Company'),
-                                'description': (job.get('description', '')[:150] + '...') if job.get('description') else 'No description available',
-                                'salary': salary_display,
-                                'location': location_display,
-                                'type': 'Remote' if is_remote else 'Hybrid/On-site',
-                                'url': job.get('redirect_url', ''),
-                                'posted': job.get('created', 'Recently posted')
-                            })
-                            
-                            # Limit to 8 jobs
-                            if len(jobs) >= 8:
-                                break
+                        # Get location info
+                        location_info = job.get('location', {})
+                        location_display = location_info.get('display_name', 'Various') if location_info else 'Various'
+                        
+                        jobs.append({
+                            'title': job.get('title', 'Unknown Title'),
+                            'company': job.get('company', {}).get('display_name', 'Unknown Company'),
+                            'description': (job.get('description', '')[:150] + '...') if job.get('description') else 'No description available',
+                            'salary': salary_display,
+                            'location': location_display,
+                            'type': 'Part-time/Contract',  # Since we're filtering by salary range for retirement income
+                            'url': job.get('redirect_url', ''),
+                            'posted': job.get('created', 'Recently posted')
+                        })
                     
                     logger.info(f"Successfully fetched {len(jobs)} real jobs from Adzuna API")
                 else:
