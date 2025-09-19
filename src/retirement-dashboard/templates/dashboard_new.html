@@ -1,13 +1,43 @@
 <!DOCTYPE html>
+<!--
+Retirement Dashboard Template
+============================
+
+This template provides the main UI for the AI-powered retirement planning dashboard.
+It integrates with Bank of Anthos user data and external APIs to provide:
+
+Key Components:
+1. Financial Metrics Cards - Display user's current financial situation
+2. Retirement Projection Chart - Interactive chart showing savings trajectory
+3. AI Chat Interface - Conversational AI advisor with financial context
+4. Job Recommendations - Real-time remote job opportunities
+5. Goal Tracking - Progress toward retirement targets
+
+Data Sources:
+- financial_data: User's balance, income, expenses from Bank of Anthos
+- AI responses: Personalized advice from Google Gemini
+- Job data: Real-time opportunities from Adzuna API
+
+Technology Stack:
+- Tailwind CSS: Modern utility-first styling
+- Chart.js: Interactive financial visualizations
+- Material Icons: Consistent iconography
+- Vanilla JS: Dynamic content and API interactions
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buoybord - AI Retirement Advisor Dashboard - {{ bank_name }}</title>
+    
+    <!-- External Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom Styling -->
     <style>
+        /* Soft gradient background for modern, calming appearance */
         .gradient-bg {
             background: linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 25%, #fce4ec 50%, #fff3e0 100%);
         }

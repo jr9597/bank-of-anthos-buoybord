@@ -1,225 +1,263 @@
-# Retirement Dashboard
+# Retirement Dashboard Microservice
 
-An AI-powered retirement planning microservice for Bank of Anthos, built for the GKE Turns 10 Hackathon.
+An AI-powered retirement planning dashboard that extends Bank of Anthos with comprehensive financial planning capabilities.
 
-## Overview
+## 🎯 Overview
 
-The Retirement Dashboard is a modern microservice that enhances the Bank of Anthos application with intelligent retirement planning capabilities. It analyzes user financial data and provides personalized advice using Google AI models, while also offering job recommendations to help users increase their income potential.
+The Retirement Dashboard is a modern microservice that integrates with the Bank of Anthos ecosystem to provide users with:
 
-## Features
+- **Personalized Retirement Planning**: AI-powered advice based on real financial data
+- **Job Market Intelligence**: Real-time remote job opportunities for supplemental income
+- **Financial Projections**: Interactive charts and goal tracking with compound growth modeling
+- **Conversational AI**: Chat interface that understands user's financial context
 
-### 🤖 AI-Powered Financial Advisor
-- **Google Gemini Integration**: Leverages Google's advanced AI models for personalized retirement advice
-- **Financial Health Analysis**: Comprehensive assessment of savings rate, emergency funds, and spending patterns
-- **Scenario Planning**: Interactive retirement projections with different savings and investment scenarios
-- **Goal Setting**: AI-driven recommendations for achieving specific retirement targets
+## 🏗️ Architecture
 
-### 💼 Career Growth Opportunities
-- **Adzuna API Integration**: Real-time job recommendations based on income goals
-- **Skill Gap Analysis**: Identification of in-demand skills for career advancement
-- **Career Path Suggestions**: Structured paths for income growth with timelines and requirements
-- **Income Potential Calculator**: Analysis of salary increase opportunities
-
-### 📊 Interactive Dashboard
-- **Modern UI**: Responsive design with Bootstrap 5 and Material Icons
-- **Real-time Charts**: Dynamic visualizations using Chart.js
-- **Financial Metrics**: Key performance indicators for retirement readiness
-- **Mobile-Friendly**: Optimized for desktop, tablet, and mobile devices
-
-## Architecture
+### System Components
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Retirement Dashboard                      │
+│                Retirement Dashboard                          │
 ├─────────────────────────────────────────────────────────────┤
-│  Frontend (Flask + Jinja2)                                 │
-│  ├── Dashboard UI                                          │
-│  ├── Scenario Calculator                                   │
-│  └── Goal Setting Interface                                │
-├─────────────────────────────────────────────────────────────┤
-│  Backend Services                                          │
-│  ├── AI Advisor (Google Gemini)                           │
-│  ├── Job Recommendations (Adzuna API)                     │
-│  └── Financial Analyzer                                   │
-├─────────────────────────────────────────────────────────────┤
-│  External Integrations                                     │
-│  ├── Bank of Anthos APIs                                  │
-│  │   ├── Balance Reader                                   │
-│  │   └── Transaction History                              │
-│  ├── Google AI Models                                     │
-│  └── Adzuna Job Search API                                │
+│                                                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐  │
+│  │   AI Advisor    │  │ Job Recommender │  │  Financial  │  │
+│  │  (Gemini API)   │  │  (Adzuna API)   │  │  Analyzer   │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────┘  │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────────┐  │
+│  │              Flask Web Application                      │  │
+│  │  • JWT Authentication                                  │  │
+│  │  • RESTful APIs                                        │  │
+│  │  • Modern UI (Tailwind CSS + Chart.js)                │  │
+│  └─────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Bank of Anthos Microservices                   │
+│                                                             │
+│  ┌─────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+│  │ userservice │  │  balancereader  │  │transactionhistory│  │
+│  │(Auth & User)│  │ (Real Balance)  │  │ (Transactions)  │  │
+│  └─────────────┘  └─────────────────┘  └─────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Technology Stack
+### Module Structure
 
-- **Framework**: Flask (Python 3.11)
-- **AI Integration**: Google Generative AI (Gemini)
-- **Job API**: Adzuna API
-- **Frontend**: Bootstrap 5, Material Icons, Chart.js
-- **Containerization**: Docker
-- **Orchestration**: Kubernetes
-- **Development**: Skaffold
-- **Authentication**: JWT tokens from Bank of Anthos
+- **`app.py`**: Main Flask application with authentication and API endpoints
+- **`modules/ai_advisor.py`**: Google Gemini integration for personalized advice
+- **`modules/job_recommendations.py`**: Adzuna API integration for job market data
+- **`modules/financial_analyzer.py`**: Financial calculations and projections
+- **`templates/`**: HTML templates with modern UI components
+- **`k8s/`**: Kubernetes deployment manifests
 
-## Development Setup
+## 🚀 Features
 
-### Prerequisites
-- Docker
-- kubectl
-- Skaffold
-- Google Cloud Project with APIs enabled
-- API Keys (Google AI, Adzuna)
+### 📊 Financial Analysis
+- **Real-time Data**: Integrates with Bank of Anthos transaction history
+- **Income/Expense Tracking**: Automated categorization from bank transactions
+- **Savings Rate Calculation**: Monthly savings trends and patterns
+- **Retirement Projections**: 5% CAGR compound growth modeling
 
-### Local Development
+### 🤖 AI-Powered Advice
+- **Personalized Recommendations**: Context-aware advice using Google Gemini
+- **Financial Context**: AI knows user's balance, income, expenses, and goals
+- **Job Market Awareness**: AI can reference current job opportunities
+- **Conversational Interface**: Natural language interaction with financial expertise
 
-1. **Clone the repository**:
-   ```bash
-   cd src/retirement-dashboard
-   ```
+### 💼 Job Recommendations
+- **Remote-First**: Focus on remote work opportunities for flexibility
+- **Salary Range**: $0-$30k range for part-time supplemental income
+- **Real-time Data**: Live job market data from Adzuna API
+- **Retirement-Focused**: Jobs selected to boost retirement savings
 
-2. **Set up environment variables**:
-   ```bash
-   export GOOGLE_AI_API_KEY="your-google-ai-api-key"
-   export ADZUNA_APP_ID="your-adzuna-app-id"
-   export ADZUNA_APP_KEY="your-adzuna-app-key"
-   ```
+### 📈 Interactive Dashboard
+- **Financial Metrics**: Current balance, monthly income/expenses, savings rate
+- **Retirement Goals**: Progress tracking toward $1.5M retirement target
+- **Projection Charts**: Visual retirement trajectory with compound growth
+- **Responsive Design**: Modern UI that works on all devices
 
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🔧 Technical Implementation
 
-4. **Run locally**:
-   ```bash
-   python app.py
-   ```
+### Technology Stack
 
-### Skaffold Development
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Backend** | Python Flask | Web framework and API server |
+| **AI** | Google Gemini 1.5-flash | Natural language processing and advice |
+| **Jobs API** | Adzuna API | Real-time job market data |
+| **Frontend** | HTML5 + Tailwind CSS | Modern, responsive UI |
+| **Charts** | Chart.js | Interactive financial visualizations |
+| **Auth** | JWT | Integration with Bank of Anthos auth |
+| **Database** | Bank of Anthos PostgreSQL | Existing user and transaction data |
+| **Deployment** | Kubernetes + GKE | Cloud-native deployment |
 
-1. **Start development mode**:
-   ```bash
-   skaffold dev --profile development
-   ```
+### API Endpoints
 
-2. **Access the dashboard**:
-   - Navigate to Bank of Anthos frontend
-   - Click the "Retirement Dashboard" button (after integration)
-   - Or access directly at `http://localhost:8000`
-
-## Deployment
-
-### Kubernetes Secrets
-
-1. **Create secrets for API keys**:
-   ```bash
-   kubectl create secret generic retirement-dashboard-secrets \
-     --from-literal=google-ai-api-key="your-google-ai-api-key" \
-     --from-literal=adzuna-app-id="your-adzuna-app-id" \
-     --from-literal=adzuna-app-key="your-adzuna-app-key"
-   ```
-
-### Production Deployment
-
-1. **Deploy to staging**:
-   ```bash
-   skaffold run --profile staging
-   ```
-
-2. **Deploy to production**:
-   ```bash
-   skaffold run --profile production
-   ```
-
-## API Endpoints
-
-### Web Routes
-- `GET /` - Main dashboard page
-- `GET /health` - Health check endpoint
-- `GET /version` - Service version
-
-### API Routes
-- `POST /api/scenario` - Calculate retirement projections
-- `POST /api/goals` - Set retirement goals
-- `GET /api/jobs` - Get job recommendations
-
-## Configuration
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Main dashboard page |
+| `/api/chat` | POST | AI chat for retirement advice |
+| `/api/jobs` | GET | Job recommendations from Adzuna |
+| `/health` | GET | Health check for Kubernetes |
+| `/version` | GET | Service version info |
 
 ### Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `GOOGLE_AI_API_KEY` | Google AI API key for Gemini | Optional* |
-| `ADZUNA_APP_ID` | Adzuna API application ID | Optional* |
-| `ADZUNA_APP_KEY` | Adzuna API key | Optional* |
-| `BALANCES_API_ADDR` | Balance reader service address | Yes |
-| `HISTORY_API_ADDR` | Transaction history service address | Yes |
-| `FRONTEND_URL` | Bank of Anthos frontend URL | Yes |
-| `PORT` | Service port | No (default: 8000) |
+| `GOOGLE_AI_API_KEY` | Google Gemini API key | Yes |
+| `ADZUNA_APP_ID` | Adzuna application ID | Yes |
+| `ADZUNA_APP_KEY` | Adzuna API key | Yes |
+| `BANK_NAME` | Bank name for branding | No |
+| `FRONTEND_URL` | Frontend service URL | No |
 
-*If not provided, the service will use mock data for demonstrations.
+## 🚀 Deployment
 
-## Integration with Bank of Anthos
+### Prerequisites
 
-The retirement dashboard integrates seamlessly with the existing Bank of Anthos architecture:
+1. **Bank of Anthos**: Must be deployed and running
+2. **API Keys**: 
+   - Google AI API key from [Google AI Studio](https://aistudio.google.com/)
+   - Adzuna API credentials from [Adzuna Developer](https://developer.adzuna.com/)
+3. **Kubernetes Cluster**: GKE or any Kubernetes cluster
 
-1. **Authentication**: Uses existing JWT tokens from the userservice
-2. **Data Access**: Connects to balance-reader and transaction-history services
-3. **Frontend Integration**: Accessible via a button on the main Bank of Anthos homepage
+### Quick Deploy
 
-## AI Features
+1. **Create Secrets**:
+   ```bash
+   kubectl create secret generic retirement-dashboard-secrets \
+     --from-literal=GOOGLE_AI_API_KEY=your_gemini_key \
+     --from-literal=ADZUNA_APP_ID=your_adzuna_id \
+     --from-literal=ADZUNA_APP_KEY=your_adzuna_key
+   ```
 
-### Google Gemini Integration
-- **Retirement Advice**: Analyzes financial patterns and provides personalized recommendations
-- **Scenario Analysis**: Evaluates different retirement scenarios with risk assessments
-- **Goal Recommendations**: Suggests actionable steps for achieving retirement targets
+2. **Deploy the Service**:
+   ```bash
+   kubectl apply -f src/retirement-dashboard/minimal-deployment.yaml
+   ```
 
-### Adzuna Job Recommendations
-- **Income-Based Search**: Finds jobs matching current and desired income levels
-- **Skill Analysis**: Identifies high-value skills in the job market
-- **Career Progression**: Maps potential career paths for income growth
+3. **Access the Dashboard**:
+   - Get the external IP: `kubectl get service retirement-dashboard`
+   - Access via Bank of Anthos frontend (recommended)
+   - Or directly via the service IP
 
-## Monitoring and Observability
+### Development Setup
 
-- **Health Checks**: Kubernetes readiness and liveness probes
-- **Logging**: Structured logging with correlation IDs
-- **Metrics**: Resource usage and performance monitoring
-- **Tracing**: Request tracing for debugging
+1. **Local Development**:
+   ```bash
+   cd src/retirement-dashboard
+   pip install -r requirements.txt
+   export GOOGLE_AI_API_KEY=your_key
+   export ADZUNA_APP_ID=your_id
+   export ADZUNA_APP_KEY=your_key
+   python app.py
+   ```
 
-## Security
+2. **Docker Build**:
+   ```bash
+   docker build -t retirement-dashboard .
+   docker run -p 8080:8080 retirement-dashboard
+   ```
 
-- **Authentication**: JWT token validation
-- **Authorization**: User-specific data access
-- **Security Context**: Non-root container execution
-- **Secrets Management**: Kubernetes secrets for API keys
-- **Input Validation**: Comprehensive input sanitization
+## 📊 Usage Examples
 
-## Contributing
+### Financial Analysis
+The dashboard automatically analyzes user transactions to calculate:
+- **Monthly Income**: Credits to the account (salary, transfers in)
+- **Monthly Expenses**: Debits from the account (purchases, transfers out)  
+- **Savings Rate**: Income minus expenses
+- **Retirement Trajectory**: Compound growth projections at 5% CAGR
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+### AI Chat Examples
+- *"How much should I save monthly to retire by 65?"*
+- *"What part-time jobs could help boost my retirement savings?"*
+- *"Is my current savings rate sufficient for my retirement goals?"*
+- *"Should I consider a career change to increase my retirement fund?"*
 
-## License
+### Job Recommendations
+- Automatically fetches remote jobs in $0-$30k salary range
+- Focuses on part-time and contract opportunities
+- Updates in real-time from Adzuna job market data
+- Clickable links to apply directly to opportunities
+
+## 🔐 Security
+
+### Authentication
+- Inherits JWT authentication from Bank of Anthos
+- Validates tokens using Bank of Anthos public key
+- Graceful fallback to demo mode for unauthenticated users
+
+### API Key Management
+- All API keys stored in Kubernetes Secrets
+- No hardcoded credentials in source code
+- Environment-based configuration
+
+### Data Privacy
+- No financial data stored outside Bank of Anthos
+- API calls use user data only for real-time calculations
+- No persistent storage of user data in retirement dashboard
+
+## 🧪 Testing
+
+### Health Checks
+```bash
+curl http://your-service-ip/health
+# Returns: {"status": "healthy", "service": "retirement-dashboard"}
+```
+
+### API Testing
+```bash
+# Test job recommendations
+curl "http://your-service-ip/api/jobs?keywords=developer"
+
+# Test AI chat (requires authentication)
+curl -X POST "http://your-service-ip/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "How can I improve my retirement savings?"}'
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **AI Not Working**: Check `GOOGLE_AI_API_KEY` in secrets
+2. **No Jobs Loading**: Verify `ADZUNA_APP_ID` and `ADZUNA_APP_KEY`
+3. **Zero Financial Data**: Ensure Bank of Anthos services are accessible
+4. **Authentication Errors**: Check JWT token validation and public key
+
+### Debug Logs
+```bash
+kubectl logs deployment/retirement-dashboard
+```
+
+### Resource Issues
+The service requires minimal resources:
+- **CPU**: 50m request, 200m limit
+- **Memory**: 64Mi request, 256Mi limit
+
+## 🔮 Future Enhancements
+
+- **Investment Advice**: Integration with investment platforms
+- **Risk Assessment**: Monte Carlo simulations for retirement planning
+- **Goal Tracking**: Multiple retirement scenarios and goals
+- **Social Features**: Retirement planning communities
+- **Advanced Analytics**: More sophisticated financial modeling
+
+## 📄 License
 
 Copyright 2025 Google LLC. Licensed under the Apache License, Version 2.0.
 
-## Hackathon Submission
+## 🤝 Contributing
 
-This microservice was created for the **GKE Turns 10 Hackathon** with the following objectives:
+This microservice demonstrates modern patterns for extending existing applications with AI capabilities. It showcases:
 
-- ✅ **Enhanced Bank of Anthos** with AI-powered retirement planning
-- ✅ **Google AI Integration** using Gemini models
-- ✅ **External API Integration** with Adzuna for job recommendations
-- ✅ **Kubernetes Deployment** on GKE
-- ✅ **Modern UI/UX** with responsive design
-- ✅ **Production Ready** with proper monitoring and security
+- **Microservice Integration**: How to add new capabilities to existing systems
+- **AI Integration**: Practical use of Google Gemini in business applications  
+- **External API Integration**: Real-time data from third-party services
+- **Modern UI/UX**: Contemporary web development practices
+- **Cloud-Native Deployment**: Kubernetes and GKE best practices
 
-### Demo Features
-- Real-time financial health analysis
-- AI-powered retirement advice
-- Interactive scenario planning
-- Job market insights
-- Career growth recommendations
+For questions or contributions, please follow the Bank of Anthos contribution guidelines.

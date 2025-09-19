@@ -12,7 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""AI-Powered Retirement Advisor using Google Gemini"""
+"""
+AI-Powered Retirement Advisor using Google Gemini
+
+This module provides intelligent retirement planning advice by integrating:
+1. Google Gemini AI for natural language processing and advice generation
+2. Adzuna API for job search capabilities (tool calling)
+3. Financial data analysis and personalized recommendations
+
+Key Features:
+- Personalized retirement advice based on user's financial situation
+- Integration with current job market data for income optimization
+- Tool calling for dynamic job searches during conversations
+- Context-aware responses using financial and job market data
+- Fallback to mock responses when APIs are unavailable
+
+Architecture:
+- Uses Google Gemini 1.5-flash model for speed and accuracy
+- Implements tool calling pattern for job searches
+- Contextual prompt engineering with financial and job data
+- Error handling with graceful degradation to mock responses
+"""
 
 import os
 import logging
@@ -24,10 +44,27 @@ from decimal import Decimal
 logger = logging.getLogger(__name__)
 
 class AIAdvisor:
-    """AI-powered retirement advisor using Google Gemini"""
+    """
+    AI-powered retirement advisor using Google Gemini
+    
+    This class provides intelligent retirement planning advice by combining:
+    - User's financial data (income, expenses, savings, goals)
+    - Current job market opportunities (via Adzuna API)
+    - AI-powered analysis and recommendations (via Google Gemini)
+    
+    The advisor can engage in conversational assistance and perform
+    tool calling to search for job opportunities when relevant.
+    """
     
     def __init__(self):
-        """Initialize the AI advisor with Google Gemini"""
+        """
+        Initialize the AI advisor with Google Gemini and Adzuna APIs
+        
+        Sets up:
+        - Google Gemini API connection for AI advice generation
+        - Adzuna API credentials for job search tool calling
+        - Proper error handling and fallback mechanisms
+        """
         self.logger = logging.getLogger(__name__)
         try:
             # Configure Google Generative AI

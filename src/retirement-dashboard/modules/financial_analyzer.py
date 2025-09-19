@@ -12,7 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Financial Analysis Engine for Retirement Planning"""
+"""
+Financial Analysis Engine for Retirement Planning
+
+This module provides comprehensive financial analysis capabilities for retirement planning:
+
+Key Features:
+1. Transaction Analysis - Extract income and expense patterns from bank data
+2. Savings Rate Calculation - Determine monthly savings and spending trends
+3. Retirement Projections - Calculate retirement trajectory with compound growth
+4. Financial Health Assessment - Evaluate overall financial wellness
+5. Goal-based Planning - Compare current trajectory against retirement targets
+
+Data Processing:
+- Parses Bank of Anthos transaction history
+- Groups transactions by month for trend analysis
+- Distinguishes between income (credits) and expenses (debits)
+- Handles various timestamp formats and data inconsistencies
+- Provides fallback calculations for missing data
+
+Mathematical Models:
+- Compound Annual Growth Rate (CAGR) projections
+- Future Value of Annuity calculations
+- Monte Carlo simulation capabilities (future enhancement)
+- Risk assessment and scenario planning
+"""
 
 import logging
 from datetime import datetime, timedelta
@@ -23,10 +47,26 @@ import math
 logger = logging.getLogger(__name__)
 
 class FinancialAnalyzer:
-    """Financial analysis engine for retirement planning calculations"""
+    """
+    Financial analysis engine for retirement planning calculations
+    
+    This class processes financial data from Bank of Anthos and performs
+    various calculations needed for retirement planning:
+    
+    - Transaction pattern analysis
+    - Income and expense categorization
+    - Savings rate calculation
+    - Retirement projection modeling
+    - Financial health scoring
+    """
     
     def __init__(self):
-        """Initialize the financial analyzer"""
+        """
+        Initialize the financial analyzer
+        
+        Sets up logging and prepares the analyzer for processing
+        financial data and performing retirement calculations.
+        """
         self.logger = logging.getLogger(__name__)
     
     def calculate_income_expenses(self, transactions: List[Dict], account_id: str) -> Tuple[float, float]:

@@ -12,7 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Retirement Dashboard Service for Bank of Anthos"""
+"""
+Retirement Dashboard Service for Bank of Anthos
+
+This microservice provides a comprehensive retirement planning dashboard that integrates with:
+- Bank of Anthos backend services (balancereader, transactionhistory, userservice)
+- Google AI (Gemini) for personalized retirement advice
+- Adzuna API for part-time job recommendations to boost retirement income
+
+The service enables users to:
+1. View their current financial situation (balance, income, expenses)
+2. Analyze retirement trajectory with projections and goals
+3. Get AI-powered personalized retirement planning advice
+4. Find remote part-time work opportunities to supplement retirement savings
+5. Chat with an AI advisor that knows their financial context and available jobs
+
+Architecture:
+- Flask web application with JWT authentication
+- Modular design with separate modules for AI, jobs, and financial analysis
+- Integration with Bank of Anthos microservices via REST APIs
+- Real-time job data from Adzuna API
+- AI-powered chat using Google Gemini with financial and job context
+"""
 
 import os
 import logging
@@ -23,36 +44,74 @@ from decimal import Decimal
 from flask import Flask, request, render_template, jsonify, redirect, url_for, make_response
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-# Local imports
+# Local imports - Custom modules for retirement dashboard functionality
 from modules.ai_advisor import AIAdvisor
 from modules.job_recommendations import JobRecommendations
 from modules.financial_analyzer import FinancialAnalyzer
 
+# Initialize Flask application
 app = Flask(__name__)
+# Configure proxy fix for proper handling of headers in Kubernetes/GKE environment
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-# Configure logging
+# Configure logging for production deployment
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize service modules
-ai_advisor = AIAdvisor()
-job_recommendations = JobRecommendations()
-financial_analyzer = FinancialAnalyzer()
+# Initialize service modules with their respective API configurations
+ai_advisor = AIAdvisor()  # Google Gemini AI integration
+job_recommendations = JobRecommendations()  # Adzuna API integration
+financial_analyzer = FinancialAnalyzer()  # Financial calculation utilities
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint for Kubernetes"""
+    """
+    Kubernetes health check endpoint
+    
+    Used by Kubernetes for liveness and readiness probes to ensure
+    the service is running properly.
+    
+    Returns:
+        dict: Health status for Kubernetes monitoring
+    """
     return {'status': 'healthy', 'service': 'retirement-dashboard'}, 200
 
 @app.route('/version', methods=['GET'])
 def version():
-    """Service version endpoint"""
+    """
+    Service version endpoint for monitoring and debugging
+    
+    Returns the current deployment version, useful for tracking
+    which version is running in different environments.
+    
+    Returns:
+        str: Current service version from environment or default
+    """
     return os.environ.get('VERSION', '1.0.0'), 200
 
 @app.route('/', methods=['GET'])
 def dashboard():
-    """Main retirement dashboard page"""
+    """
+    Main retirement dashboard page
+    
+    This is the primary endpoint that renders the retirement planning dashboard.
+    It handles authentication, fetches user financial data, and provides both
+    authenticated and demo modes.
+    
+    Authentication Flow:
+    1. Checks for JWT token in URL params, headers, or cookies
+    2. Validates token using Bank of Anthos public key
+    3. Falls back to demo mode if no valid token
+    
+    Data Integration:
+    - Fetches user balance from balancereader service
+    - Retrieves transaction history from transactionhistory service
+    - Calculates monthly income and expenses from transaction patterns
+    - Performs retirement projections with 5% CAGR
+    
+    Returns:
+        str: Rendered HTML template with financial data and projections
+    """
     try:
         # Verify user authentication - check URL parameter first (for cross-domain redirects)
         token = request.args.get('token')  # Check URL parameter first
@@ -520,7 +579,21 @@ def get_user_financial_data(token, account_id):
     return financial_data
 
 def get_current_jobs_data():
-    """Fetch current job recommendations for AI context"""
+    """
+    Fetch current job recommendations for AI context
+    
+    This function provides the AI advisor with real-time job market data
+    so it can give informed recommendations about available opportunities.
+    
+    Uses the same search parameters as the main jobs endpoint:
+    - Remote jobs only (what: 'remote')
+    - Salary range: $0-$30,000 (suitable for part-time supplemental income)
+    - Sorted by salary for better matches
+    
+    Returns:
+        list: Array of job objects with title, company, description, salary, location
+              Limited to 10 jobs for AI context to avoid token limits
+    """
     try:
         import requests
         import os
@@ -569,7 +642,31 @@ def get_current_jobs_data():
 
 @app.route('/api/chat', methods=['POST'])
 def chat_with_ai():
-    """AI chat endpoint for retirement advice"""
+    """
+    AI chat endpoint for personalized retirement advice
+    
+    This endpoint provides an intelligent chat interface where users can ask
+    questions about retirement planning and receive personalized advice.
+    
+    AI Context Includes:
+    - User's current financial situation (balance, income, expenses)
+    - Available job opportunities (fetched from Adzuna API)
+    - Retirement goals and timeline
+    - Investment and savings strategies
+    
+    The AI can perform tool calling to search for specific job opportunities
+    when users ask job-related questions.
+    
+    Authentication:
+    - Attempts to authenticate user for personalized data
+    - Falls back to demo financial data for unauthenticated users
+    
+    Request:
+        JSON: {"message": "user question about retirement"}
+    
+    Returns:
+        JSON: {"response": "AI advice", "jobs": [...], "timestamp": "..."}
+    """
     try:
         chat_data = request.get_json()
         message = chat_data.get('message', '')
@@ -628,7 +725,41 @@ def chat_with_ai():
 
 @app.route('/api/jobs', methods=['GET'])
 def get_job_recommendations():
-    """Get job recommendations from Adzuna API with optional keyword search"""
+    """
+    Get job recommendations from Adzuna API for retirement income supplementation
+    
+    This endpoint fetches part-time remote job opportunities specifically filtered
+    for retirement planning purposes. Jobs are limited to $0-$30k salary range
+    to focus on supplemental income rather than full career changes.
+    
+    Search Parameters:
+    - what: 'remote' (ensures all jobs are remote-friendly)
+    - salary_min: 0 (includes volunteer/low-pay opportunities)
+    - salary_max: 30000 (focuses on part-time/supplemental income)
+    - results_per_page: 30 (maximum relevant results)
+    
+    Query Parameters:
+        keywords (optional): Additional search terms (default: 'software engineer')
+        location (optional): Location filter (default: 'remote')
+    
+    Returns:
+        JSON: {
+            "jobs": [array of job objects],
+            "timestamp": "ISO timestamp"
+        }
+        
+    Job Object Format:
+        {
+            "title": "Job Title",
+            "company": "Company Name", 
+            "description": "Brief description...",
+            "salary": "$X - $Y" or "Competitive",
+            "location": "Location or 'Remote'",
+            "type": "Part-time/Contract",
+            "url": "Application URL",
+            "posted": "Date posted"
+        }
+    """
     try:
         # Get search keywords from query parameters - default to popular tech jobs
         keywords = request.args.get('keywords', 'software engineer')

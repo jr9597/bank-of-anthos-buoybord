@@ -19,6 +19,77 @@ If you are using Bank of Anthos, please ★Star this repository to show your int
 | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | [![Login](/docs/img/login.png)](/docs/img/login.png) | [![User Transactions](/docs/img/transactions.png)](/docs/img/transactions.png) |
 
+## 🚀 New Feature: Retirement Dashboard
+
+The **Retirement Dashboard** is an AI-powered microservice that extends Bank of Anthos with comprehensive retirement planning capabilities. This innovative feature demonstrates the integration of modern AI services with traditional banking applications.
+
+### ✨ Key Features
+
+- **📊 Financial Analysis**: Real-time analysis of user's transaction history, income, and expenses
+- **🤖 AI-Powered Advice**: Personalized retirement planning recommendations using Google Gemini
+- **💼 Job Recommendations**: Integration with Adzuna API for remote part-time job opportunities
+- **📈 Retirement Projections**: Interactive charts showing retirement savings trajectory with 5% CAGR
+- **💬 Intelligent Chat**: Conversational AI that understands user's financial context and available jobs
+- **📱 Modern UI**: Responsive dashboard with financial metrics, goals, and actionable insights
+
+### 🏗️ Architecture
+
+The retirement dashboard integrates seamlessly with Bank of Anthos:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  Retirement Dashboard                        │
+├─────────────────────────────────────────────────────────────┤
+│  Frontend (Flask + Tailwind CSS)                           │
+│  ├─── AI Advisor (Google Gemini)                           │
+│  ├─── Job Recommendations (Adzuna API)                     │
+│  └─── Financial Analyzer                                   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Bank of Anthos Services                        │
+│  ├─── balancereader (User Balance)                         │
+│  ├─── transactionhistory (Transaction Data)                │
+│  └─── userservice (Authentication)                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 🔧 Technology Stack
+
+- **Backend**: Python Flask with JWT authentication
+- **AI**: Google Gemini 1.5-flash for personalized advice
+- **Jobs API**: Adzuna API for real-time job market data
+- **Database**: Integrates with existing Bank of Anthos PostgreSQL
+- **Frontend**: Modern HTML5 with Tailwind CSS and Chart.js
+- **Deployment**: Kubernetes-native with GKE integration
+
+### 🎯 Use Cases
+
+1. **Retirement Planning**: Analyze current savings and project retirement goals
+2. **Income Optimization**: Find part-time remote work to boost retirement savings
+3. **Financial Education**: Learn about retirement strategies through AI conversations
+4. **Goal Setting**: Set and track progress toward retirement milestones
+5. **Market Intelligence**: Stay informed about job opportunities for supplemental income
+
+### 🚀 Getting Started
+
+The retirement dashboard is automatically available when you deploy Bank of Anthos. Access it by:
+
+1. Log into your Bank of Anthos account
+2. Click the "Retirement Dashboard" button on the homepage
+3. Explore your financial projections and chat with the AI advisor
+4. Browse personalized job recommendations for retirement income
+
+### 🔐 Security & Privacy
+
+- Inherits Bank of Anthos security model with JWT authentication
+- API keys managed through Kubernetes Secrets
+- No financial data stored outside Bank of Anthos ecosystem
+- Privacy-focused: user data only used for personalized recommendations
+
+For detailed deployment and configuration instructions, see [src/retirement-dashboard/README.md](/src/retirement-dashboard/README.md).
+
 
 ## Service architecture
 
@@ -35,6 +106,7 @@ If you are using Bank of Anthos, please ★Star this repository to show your int
 | [contacts](/src/accounts/contacts)                     | Python        | Stores list of other accounts associated with a user. Used for drop down in "Send Payment" and "Deposit" forms.                              |
 | [accounts-db](/src/accounts/accounts-db)               | PostgreSQL    | Database for user accounts and associated data. Option to pre-populate with demo users.                                                      |
 | [loadgenerator](/src/loadgenerator)                    | Python/Locust | Continuously sends requests imitating users to the frontend. Periodically creates new accounts and simulates transactions between them.      |
+| [retirement-dashboard](/src/retirement-dashboard)      | Python/Flask  | AI-powered retirement planning dashboard with job recommendations and personalized financial advice.                                          |
 
 ## Interactive quickstart (GKE)
 
