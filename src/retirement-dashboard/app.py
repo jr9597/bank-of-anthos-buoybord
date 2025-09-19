@@ -702,11 +702,8 @@ def chat_with_ai():
                 'current_income': 90000
             }
         
-        # Get current job opportunities for AI context
-        current_jobs = get_current_jobs_data()
-        
-        # Get AI response with financial data and job context
-        ai_result = ai_advisor.search_jobs_with_ai(message, financial_data, current_jobs)
+        # Get AI response with financial data (jobs loaded on-demand via function calling)
+        ai_result = ai_advisor.search_jobs_with_ai(message, financial_data)
         
         response_data = {
             'response': ai_result['response'],

@@ -116,19 +116,45 @@ limitations under the License.
         </div>
       </div>
 
-      <!-- Retirement Dashboard Button -->
+      <!-- 🎯 HACKATHON FEATURE: Retirement Dashboard Button -->
       <div class="col-lg-4 deposit-send-payment-div">
-        <div class="card card-button deposit-send-button" onclick="window.location.href='/retirement-dashboard'">
-          <div class="card-body">
+        <div class="card card-button deposit-send-button retirement-dashboard-btn" onclick="window.location.href='/retirement-dashboard'" 
+             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    border: 3px solid #FFD700; 
+                    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); 
+                    transform: scale(1.05); 
+                    position: relative;
+                    overflow: visible;">
+          <div class="card-body" style="color: white;">
+            <!-- Hackathon Badge -->
+            <div style="position: absolute; top: -8px; right: -8px; 
+                        background: #FFD700; color: #000; border-radius: 50%; 
+                        width: 35px; height: 35px; display: flex; align-items: center; 
+                        justify-content: center; font-weight: bold; font-size: 12px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+              🏆
+            </div>
+            
             <div class="row align-items-start">
               <div class="col">
-                <span class="h5 mb-0" id="retirementSpan">
-                  Retirement Dashboard
+                <span class="h5 mb-0" id="retirementSpan" style="color: white; font-weight: 600;">
+                  🚀 Retirement Dashboard
                 </span>
-                <p class="small text-muted mb-0">AI-powered retirement planning</p>
+                <p class="small mb-0" style="color: #E8E8FF; margin-top: 2px;">
+                  🤖 AI-Powered • 💼 Job Search • 📊 Financial Planning
+                </p>
+                <div style="background: rgba(255,255,255,0.2); 
+                           padding: 2px 8px; border-radius: 12px; 
+                           display: inline-block; margin-top: 4px;
+                           font-size: 10px; font-weight: 500;">
+                  NEW MICROSERVICE
+                </div>
               </div>
               <div class="button-icon col-auto">
-                <span class="material-icons" id="retirement-icon">savings</span>
+                <span class="material-icons" id="retirement-icon" 
+                      style="color: #FFD700; font-size: 28px; animation: pulse 2s infinite;">
+                  trending_up
+                </span>
               </div>
             </div>
           </div>

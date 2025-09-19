@@ -237,19 +237,20 @@ Technology Stack:
         </div>
 
         <!-- Job Recommendations -->
-        <div class="mt-6">
+        <!-- Job Opportunities Section (Hidden initially, shown when AI finds jobs) -->
+        <div id="jobs-section" class="mt-6" style="display: none;">
             <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
                 <div class="flex items-center justify-between mb-6">
                     <div>
                         <h2 class="text-xl font-bold text-gray-900 flex items-center">
                             <span class="material-icons mr-2">work</span>
-                            Career Boost Recommendations
+                            AI-Found Job Opportunities
                         </h2>
-                        <p class="text-gray-600">Opportunities to accelerate your retirement timeline through career advancement</p>
+                        <p class="text-gray-600">Part-time remote jobs found by our AI advisor based on your conversation</p>
                     </div>
                     <button onclick="refreshJobs()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
                         <span class="material-icons mr-1 text-sm">refresh</span>
-                        Refresh Jobs
+                        Search Again
                     </button>
                 </div>
 
@@ -429,6 +430,14 @@ Technology Stack:
                 
                 const data = await response.json();
                 addMessage('ai', data.response || 'Sorry, I encountered an error.');
+                
+                // If AI found jobs, show the jobs section and populate it
+                if (data.jobs && data.jobs.length > 0) {
+                    document.getElementById('jobs-section').style.display = 'block';
+                    displayJobs(data.jobs);
+                    // Scroll to jobs section
+                    document.getElementById('jobs-section').scrollIntoView({ behavior: 'smooth' });
+                }
             } catch (error) {
                 addMessage('ai', 'Sorry, I encountered an error. Please try again.');
             }
@@ -544,10 +553,8 @@ Technology Stack:
             location.reload();
         }
 
-        // Load jobs on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            refreshJobs();
-        });
+        // Jobs are now loaded on-demand when AI determines they're needed
+        // No automatic job loading on page load
     </script>
 </body>
 </html>

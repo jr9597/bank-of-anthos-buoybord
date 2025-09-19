@@ -435,74 +435,184 @@ class AIAdvisor:
     
     def search_jobs_with_ai(self, message, financial_data=None, current_jobs=None):
         """
-        Enhanced chat response that can search for jobs using Adzuna API as a tool.
+        Enhanced chat response with Gemini function calling for job search.
+        
+        Uses Gemini's function calling capability to dynamically search for jobs
+        when the user asks about employment opportunities. The AI will decide
+        when to call the job search function and what parameters to use.
         
         Args:
             message (str): User's message potentially requesting job search
             financial_data (dict): User's financial data for context
+            current_jobs (list): Unused in function calling approach
             
         Returns:
-            dict: Response with text and optionally job results
+            dict: Response with text and optionally job results from function calling
         """
         try:
-            # Check if user is asking about jobs
-            job_keywords = ['job', 'career', 'work', 'salary', 'employment', 'hiring', 'position', 'opportunity']
-            is_job_request = any(keyword in message.lower() for keyword in job_keywords)
-            
-            if not is_job_request:
-                # Regular chat response
+            if not self.google_ai_api_key:
                 return {
-                    'response': self.get_chat_response(message, financial_data, current_jobs),
+                    'response': self.get_chat_response(message, financial_data),
                     'jobs': None
                 }
             
-            # Extract job search criteria from the message
-            search_criteria = self._extract_job_criteria(message, financial_data)
+            # Configure Gemini with function calling for job search
+            genai.configure(api_key=self.google_ai_api_key)
             
-            # Search for jobs
-            jobs = self._search_adzuna_jobs(search_criteria)
+            # Define the job search function for Gemini - using correct API format
+            search_remote_jobs_declaration = {
+                "name": "search_remote_jobs",
+                "description": "Search for remote part-time job opportunities using specific keywords and salary range. Use this when users ask about jobs, work, employment, or additional income opportunities.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "keywords": {
+                            "type": "string",
+                            "description": "Job search keywords (e.g., 'software engineer', 'data analyst', 'marketing'). Ask user for specific role preferences if not clear."
+                        },
+                        "salary_min": {
+                            "type": "integer", 
+                            "description": "Minimum salary range in USD (default: 0 for part-time work)"
+                        },
+                        "salary_max": {
+                            "type": "integer",
+                            "description": "Maximum salary range in USD (default: 30000 for part-time supplemental income)"
+                        }
+                    },
+                    "required": ["keywords"]
+                }
+            }
             
-            # Generate AI response with job context
-            job_context = f"\n\nI found {len(jobs)} relevant job opportunities for you:" if jobs else "\n\nI couldn't find specific jobs matching your criteria, but here's some advice:"
+            # Create context for the AI
+            context = ""
+            if financial_data:
+                monthly_savings = financial_data.get('monthly_income', 0) - financial_data.get('monthly_expenses', 0)
+                context = f"""
+                User's Financial Context:
+                - Current Balance: ${financial_data.get('current_balance', 0):,.2f}
+                - Monthly Income: ${financial_data.get('monthly_income', 0):,.2f}
+                - Monthly Expenses: ${financial_data.get('monthly_expenses', 0):,.2f}
+                - Monthly Savings: ${monthly_savings:,.2f}
+                - Additional Monthly Savings Needed: ${financial_data.get('savings_gap', 0):,.2f}
+                """
             
-            if not self.google_ai_api_key:
-                response_text = self._get_mock_job_response(message, financial_data, jobs)
-            else:
-                # Create enhanced prompt with job search context
-                context = ""
-                if financial_data:
-                    context = f"""
-                    User's Financial Context:
-                    - Current Balance: ${financial_data.get('current_balance', 0):,.2f}
-                    - Monthly Income: ${financial_data.get('monthly_income', 0):,.2f}
-                    - Monthly Expenses: ${financial_data.get('monthly_expenses', 0):,.2f}
-                    """
-                
-                job_info = ""
-                if jobs:
-                    job_info = f"\n\nI searched for jobs and found {len(jobs)} opportunities. The jobs include positions like: " + ", ".join([job['title'] for job in jobs[:3]])
-                
-                system_prompt = f"""You are a professional financial advisor and career counselor. 
-                The user asked about jobs/career opportunities for retirement planning.{context}{job_info}
-                
-                Provide helpful advice about career growth, salary negotiations, and how career changes can impact retirement planning.
-                If jobs were found, reference them and provide specific advice. Be encouraging and actionable."""
-                
-                full_prompt = f"{system_prompt}\n\nUser question: {message}\n\nResponse:"
-                
-                model = genai.GenerativeModel('gemini-1.5-flash')
-                response = model.generate_content(full_prompt)
-                response_text = response.text.strip()
+            system_prompt = f"""You are a professional retirement planning advisor who helps users find part-time remote work to boost their retirement savings.{context}
+
+When users ask about jobs, work, employment, or additional income opportunities:
+1. If they provide specific job keywords/roles, use search_remote_jobs function immediately
+2. If they're vague, ask clarifying questions about their preferred job type before searching
+3. After getting job results, provide personalized advice based on their financial situation
+4. Focus on how additional income can accelerate their retirement goals
+
+For non-job related questions, provide general retirement planning advice based on their financial context.
+
+Be encouraging, specific, and actionable in your responses."""
+            
+            # Use the exact format from Gemini API documentation
+            from google.ai import generativelanguage as glm
+            
+            # Create the function declaration in the correct format
+            function_declaration = glm.FunctionDeclaration(
+                name="search_remote_jobs",
+                description="Search for remote part-time job opportunities using specific keywords and salary range. Use this when users ask about jobs, work, employment, or additional income opportunities.",
+                parameters=glm.Schema(
+                    type=glm.Type.OBJECT,
+                    properties={
+                        "keywords": glm.Schema(
+                            type=glm.Type.STRING,
+                            description="Job search keywords (e.g., 'software engineer', 'data analyst', 'marketing'). Ask user for specific role preferences if not clear."
+                        ),
+                        "salary_min": glm.Schema(
+                            type=glm.Type.INTEGER,
+                            description="Minimum salary range in USD (default: 0 for part-time work)"
+                        ),
+                        "salary_max": glm.Schema(
+                            type=glm.Type.INTEGER,
+                            description="Maximum salary range in USD (default: 30000 for part-time supplemental income)"
+                        )
+                    },
+                    required=["keywords"]
+                )
+            )
+            
+            # Create tool with the function declaration
+            tool = glm.Tool(function_declarations=[function_declaration])
+            
+            # Create model with tools
+            model = genai.GenerativeModel('gemini-1.5-flash', tools=[tool])
+            
+            # Send message and check for function calls
+            response = model.generate_content(f"{system_prompt}\n\nUser: {message}")
+            
+            # Check if AI decided to call the job search function
+            jobs_found = []
+            final_response = ""
+            
+            # First check if there's regular text response
+            try:
+                final_response = response.text
+            except:
+                # If no text, it means there might be function calls
+                final_response = "Let me search for job opportunities for you..."
+            
+            # Check for function calls in the response  
+            self.logger.info(f"Response candidates: {len(response.candidates) if response.candidates else 0}")
+            if response.candidates and len(response.candidates) > 0:
+                candidate = response.candidates[0]
+                if candidate.content and candidate.content.parts:
+                    self.logger.info(f"Response parts: {len(candidate.content.parts)}")
+                    for i, part in enumerate(candidate.content.parts):
+                        self.logger.info(f"Part {i}: has function_call = {hasattr(part, 'function_call')}")
+                        if hasattr(part, 'function_call') and part.function_call:
+                            function_call = part.function_call
+                            self.logger.info(f"Function call detected: {function_call.name}")
+                            if function_call.name == "search_remote_jobs":
+                                # Extract parameters from function call
+                                args = dict(function_call.args)
+                                keywords = args.get('keywords', 'remote work')
+                                salary_min = args.get('salary_min', 0)
+                                salary_max = args.get('salary_max', 30000)
+                                
+                                self.logger.info(f"AI triggered job search: keywords='{keywords}', salary_min={salary_min}, salary_max={salary_max}")
+                                
+                                # Execute the job search using existing method
+                                search_criteria = {
+                                    'query': keywords,
+                                    'salary_min': salary_min,
+                                    'salary_max': salary_max
+                                }
+                                jobs_found = self._search_adzuna_jobs(search_criteria)
+                                
+                                # Create function response for AI and get final response
+                                job_summaries = []
+                                for job in jobs_found[:5]:  # Limit to top 5 for AI context
+                                    job_summaries.append({
+                                        'title': job.get('title', 'Unknown'),
+                                        'company': job.get('company', 'Unknown'),
+                                        'salary': job.get('salary', 'Competitive'),
+                                        'location': job.get('location', 'Remote')
+                                    })
+                                
+                                # Generate final response with job results
+                                job_context = f"I found {len(jobs_found)} job opportunities matching your criteria."
+                                if job_summaries:
+                                    job_list = ". ".join([f"{job['title']} at {job['company']} ({job['salary']})" for job in job_summaries[:3]])
+                                    job_context += f" Here are some examples: {job_list}."
+                                
+                                final_response = f"Great! I can help you find part-time remote jobs to boost your retirement savings. {job_context} These opportunities can help you reach your additional income goals while maintaining flexibility for your retirement planning."
+                                
+                                break  # Exit loop after processing first function call
             
             return {
-                'response': response_text + job_context,
-                'jobs': jobs
+                'response': final_response,
+                'jobs': jobs_found if jobs_found else None
             }
             
         except Exception as e:
-            self.logger.error(f"Error in AI job search: {str(e)}")
+            self.logger.error(f"Error in function calling job search: {e}")
+            # Fallback to regular chat without function calling
             return {
-                'response': "I'd be happy to help you explore career opportunities! Could you tell me more about what type of jobs you're interested in?",
+                'response': self.get_chat_response(message, financial_data),
                 'jobs': None
             }
     

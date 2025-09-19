@@ -13,36 +13,181 @@ The Retirement Dashboard is a modern microservice that integrates with the Bank 
 
 ## 🏗️ Architecture
 
-### System Components
+### 🎯 Hackathon Architecture Overview
+
+This diagram shows the complete technology stack and data flow for the Retirement Dashboard microservice, demonstrating integration with existing Bank of Anthos infrastructure and external AI/API services.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                Retirement Dashboard                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐  │
-│  │   AI Advisor    │  │ Job Recommender │  │  Financial  │  │
-│  │  (Gemini API)   │  │  (Adzuna API)   │  │  Analyzer   │  │
-│  └─────────────────┘  └─────────────────┘  └─────────────┘  │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │              Flask Web Application                      │  │
-│  │  • JWT Authentication                                  │  │
-│  │  • RESTful APIs                                        │  │
-│  │  • Modern UI (Tailwind CSS + Chart.js)                │  │
-│  └─────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Bank of Anthos Microservices                   │
-│                                                             │
-│  ┌─────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
-│  │ userservice │  │  balancereader  │  │transactionhistory│  │
-│  │(Auth & User)│  │ (Real Balance)  │  │ (Transactions)  │  │
-│  └─────────────┘  └─────────────────┘  └─────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+🌐 USER BROWSER
+     │
+     │ HTTP/HTTPS
+     ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│                    🏦 BANK OF ANTHOS FRONTEND                               │
+│                         (Python Flask)                                     │
+├────────────────────────────────────────────────────────────────────────────┤
+│  • Enhanced index.html with prominent retirement button                    │
+│  • JWT authentication flow                                                 │
+│  • Routes user to retirement dashboard                                     │
+│  • Technology: Python Flask + Bootstrap + Material Design                 │
+└────────────────────────────────────────────────────────────────────────────┘
+     │
+     │ 🔗 /retirement-dashboard + JWT token
+     ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│           🚀 RETIREMENT DASHBOARD MICROSERVICE (NEW)                       │
+│                        (Python Flask)                                     │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    🖥️  FRONTEND LAYER                                │   │
+│  │  • HTML5 Templates (Jinja2)                                        │   │
+│  │  • Tailwind CSS for modern styling                                 │   │
+│  │  • Chart.js for interactive financial graphs                       │   │
+│  │  • Responsive design with retirement trajectory visualization       │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                  │                                         │
+│                                  ▼                                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    ⚙️  APPLICATION LAYER                            │   │
+│  │  • Flask Web Framework (Python 3.11)                              │   │
+│  │  • JWT Authentication & Token Validation                           │   │
+│  │  • RESTful API Endpoints (/api/chat, /api/jobs)                   │   │
+│  │  • Session Management & Error Handling                             │   │
+│  │  • Health Checks for Kubernetes                                    │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                  │                                         │
+│                                  ▼                                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                   🧠 BUSINESS LOGIC LAYER                           │   │
+│  │                                                                     │   │
+│  │  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐       │   │
+│  │  │   🤖 AI Advisor │ │ 💼 Job Engine   │ │ 📊 Financial    │       │   │
+│  │  │                 │ │                 │ │    Analyzer     │       │   │
+│  │  │ • Google Gemini │ │ • Adzuna API    │ │ • Income/Expense│       │   │
+│  │  │ • Function Call │ │ • Remote Jobs   │ │ • CAGR Calc     │       │   │
+│  │  │ • Context-Aware │ │ • $0-30k Range  │ │ • Projections   │       │   │
+│  │  │ • Natural Lang  │ │ • Real-time     │ │ • Savings Rate  │       │   │
+│  │  └─────────────────┘ └─────────────────┘ └─────────────────┘       │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────┘
+     │                    │                    │
+     │                    │                    │
+     ▼                    ▼                    ▼
+
+🤖 GOOGLE AI          💼 ADZUNA API         🏦 BANK OF ANTHOS
+  PLATFORM              SERVICES             MICROSERVICES
+     │                    │                     │
+┌────────────┐      ┌─────────────┐       ┌─────────────────┐
+│  Gemini    │      │ Job Market  │       │                 │
+│ 1.5-Flash  │      │    Data     │       │ ┌─────────────┐ │
+│            │      │             │       │ │userservice  │ │
+│• Function  │      │• Remote Jobs│       │ │(Auth & User)│ │
+│  Calling   │      │• Salary Filt│       │ └─────────────┘ │
+│• Tool Use  │      │• Real-time  │       │                 │
+│• Context   │      │• Keywords   │       │ ┌─────────────┐ │
+│  Aware     │      │• Part-time  │       │ │balancereader│ │
+│• Personali-│      │• Contract   │       │ │(Balances)   │ │
+│  zation    │      │  Work       │       │ └─────────────┘ │
+└────────────┘      └─────────────┘       │                 │
+                                          │ ┌─────────────┐ │
+                                          │ │transaction- │ │
+                                          │ │history      │ │
+                                          │ │(Tx History) │ │
+                                          │ └─────────────┘ │
+                                          └─────────────────┘
+                                                   │
+                                                   ▼
+                                          ┌─────────────────┐
+                                          │   PostgreSQL    │
+                                          │    Database     │
+                                          │                 │
+                                          │ • User Data     │
+                                          │ • Transactions  │
+                                          │ • Account Info  │
+                                          │ • Auth Tokens   │
+                                          └─────────────────┘
+
+🏗️ INFRASTRUCTURE LAYER
+┌────────────────────────────────────────────────────────────────────────────┐
+│                      ☸️ GOOGLE KUBERNETES ENGINE (GKE)                     │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  🔒 SECRETS              📦 DEPLOYMENTS           🌐 SERVICES              │
+│  • API Keys              • Retirement Dashboard   • LoadBalancer           │
+│  • DB Credentials        • Frontend Enhanced      • Internal Routing       │
+│  • JWT Public Keys       • Existing BoA Services  • External Access        │
+│                                                                            │
+│  ⚙️ CONFIGMAPS          📊 MONITORING             🚀 SCALING              │
+│  • Environment Config    • Health Checks          • Auto-scaling           │
+│  • Service Discovery     • Logging                • Resource Management    │
+│  • Feature Flags         • Metrics                • Load Distribution      │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### 🔄 Data Flow & Technology Interactions
+
+#### 1. **Authentication Flow** 🔐
+```
+User Login → Bank of Anthos Frontend → JWT Token → Retirement Dashboard
+Technology: JWT, Python Flask, Kubernetes Secrets
+```
+
+#### 2. **Financial Data Pipeline** 💰
+```
+PostgreSQL → Bank Services → Retirement Dashboard → Financial Analysis
+Technology: PostgreSQL, REST APIs, Python, Statistical Analysis
+```
+
+#### 3. **AI Conversation Flow** 🤖
+```
+User Message → AI Advisor → Google Gemini → Function Calling → Job Search
+Technology: Google Gemini 1.5-Flash, Function Calling API, Natural Language Processing
+```
+
+#### 4. **Job Recommendation Pipeline** 💼
+```
+AI Decision → Adzuna API → Job Filtering → UI Display
+Technology: Adzuna REST API, Python Filtering, Dynamic DOM Updates
+```
+
+### 🛠️ Technology Stack Deep Dive
+
+| Layer | Technology | Version | Purpose | Integration Method |
+|-------|------------|---------|---------|-------------------|
+| **Frontend** | HTML5/CSS3/JavaScript | Latest | User Interface | Jinja2 Templates |
+| **UI Framework** | Tailwind CSS | 3.x | Modern Styling | CDN Integration |
+| **Charts** | Chart.js | 4.x | Data Visualization | JavaScript Library |
+| **Backend** | Python Flask | 3.0+ | Web Framework | REST API Server |
+| **AI Engine** | Google Gemini | 1.5-Flash | Conversational AI | Function Calling API |
+| **Job Data** | Adzuna API | v1 | Employment Data | REST API Client |
+| **Authentication** | JWT | PyJWT 2.8+ | Token Validation | Shared Secret |
+| **Database** | PostgreSQL | 13+ | Data Storage | Existing BoA Schema |
+| **Container** | Docker | Latest | Containerization | Multi-stage Build |
+| **Orchestration** | Kubernetes | 1.28+ | Container Management | Deployments/Services |
+| **Cloud Platform** | Google Cloud (GKE) | Latest | Infrastructure | Managed Kubernetes |
+| **Monitoring** | Kubernetes Health | Native | Service Health | Liveness/Readiness |
+| **Secrets** | Kubernetes Secrets | Native | Secure Storage | Environment Variables |
+
+### 🔧 API Integration Details
+
+#### **Google Gemini Integration**
+- **Endpoint**: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash`
+- **Authentication**: API Key (stored in Kubernetes Secret)
+- **Features**: Function Calling, Context Awareness, Natural Language Understanding
+- **Data Flow**: User query → AI processing → Function calls → Response generation
+
+#### **Adzuna API Integration**
+- **Endpoint**: `https://api.adzuna.com/v1/api/jobs/us/search/1`
+- **Authentication**: App ID + App Key (stored in Kubernetes Secrets)
+- **Parameters**: Keywords, salary range ($0-$30k), remote filter
+- **Response**: JSON job listings with real-time market data
+
+#### **Bank of Anthos Integration**
+- **Services**: `userservice`, `balancereader`, `transactionhistory`
+- **Protocol**: HTTP REST APIs (internal cluster communication)
+- **Authentication**: JWT token passthrough
+- **Data**: User profiles, account balances, transaction history
 
 ### Module Structure
 
