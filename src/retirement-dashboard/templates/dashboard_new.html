@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Retirement Advisor Dashboard - {{ bank_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 25%, #fce4ec 50%, #fff3e0 100%);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="max-w-7xl mx-auto p-6">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <span class="material-icons mr-3 text-blue-600">savings</span>
+                        AI Retirement Advisor Dashboard
+                    </h1>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Track your progress toward financial independence with personalized AI guidance
+                    </p>
+                </div>
+                <div class="mt-4 sm:mt-0 flex space-x-3">
+                    <a href="{{ retirement_dashboard_url if retirement_dashboard_url else 'http://35.223.244.237' }}" 
+                       class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                        <span class="material-icons mr-1 text-sm">arrow_back</span>
+                        Back to Bank
+                    </a>
+                    <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Update Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Savings</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1" id="total-savings">${{ "{:,.2f}".format(financial_data.current_balance | default(0)) }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="material-icons text-blue-600">account_balance</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span class="text-sm font-medium text-green-600">Current balance</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Monthly Income</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1" id="monthly-income">${{ financial_data.monthly_income | default(0) | round(2) }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span class="material-icons text-green-600">trending_up</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span class="text-sm font-medium text-gray-600">From transactions</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Monthly Savings</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1" id="monthly-savings">${{ "%.2f"|format((financial_data.monthly_income | default(0)) - (financial_data.monthly_expenses | default(0))) }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="material-icons text-purple-600">savings</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span class="text-sm font-medium text-purple-600">Net monthly flow</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Current Age</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">{{ financial_data.user_age | default(35) }} years</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span class="material-icons text-orange-600">person</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span class="text-sm font-medium text-orange-600">{{ financial_data.years_to_retirement | default(30) }} years to retirement</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Retirement Goal</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">$1.5M</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span class="material-icons text-orange-600">flag</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span class="text-sm font-medium text-gray-600" id="goal-progress">
+                        {{ ((financial_data.current_balance | default(0)) / 1500000 * 100) | round(1) }}% complete
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Income Goal Card -->
+        <div class="mb-6">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white mb-2">Additional Monthly Savings Needed</h3>
+                        <div class="text-3xl font-bold" id="income-needed">
+                            $<span id="income-amount">{{ financial_data.savings_gap | default(1200) | round(0) | int }}</span>
+                        </div>
+                        <p class="text-indigo-100 mt-2">
+                            Extra monthly income needed from part-time work to reach $1.5M by age 65
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <span class="material-icons text-white text-3xl">savings</span>
+                        </div>
+                        <p class="text-indigo-200 text-sm mt-2">
+                            {{ financial_data.years_to_retirement | default(30) }} years to go
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <!-- Retirement Trajectory Chart -->
+            <div class="xl:col-span-2">
+                <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="material-icons mr-2">trending_up</span>
+                        Retirement Trajectory (5% CAGR)
+                    </h3>
+                    <canvas id="retirementChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- AI Chat -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-fit">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                            <span class="material-icons text-white text-sm">smart_toy</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">AI Retirement Advisor</h3>
+                            <p class="text-sm text-gray-600">Get personalized advice for your retirement planning</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="chat-messages" class="h-80 overflow-y-auto p-6 space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                            <span class="material-icons text-white text-xs">smart_toy</span>
+                        </div>
+                        <div class="max-w-[80%] p-4 rounded-lg bg-gray-50 border border-gray-200">
+                            <p class="text-sm leading-relaxed">Hello! I'm your AI retirement advisor. I can help you optimize your retirement strategy based on your financial data. What would you like to discuss?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 border-t border-gray-200">
+                    <div class="flex space-x-3">
+                        <input
+                            type="text"
+                            id="chat-input"
+                            placeholder="Ask me anything about retirement planning..."
+                            class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            onkeypress="if(event.key==='Enter') sendMessage()"
+                        />
+                        <button
+                            onclick="sendMessage()"
+                            class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors"
+                        >
+                            <span class="material-icons">send</span>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        AI responses are for educational purposes and should not replace professional financial advice.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Recommendations -->
+        <div class="mt-6">
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <span class="material-icons mr-2">work</span>
+                            Career Boost Recommendations
+                        </h2>
+                        <p class="text-gray-600">Opportunities to accelerate your retirement timeline through career advancement</p>
+                    </div>
+                    <button onclick="refreshJobs()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                        <span class="material-icons mr-1 text-sm">refresh</span>
+                        Refresh Jobs
+                    </button>
+                </div>
+
+                <!-- Impact Summary -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-100">Available Opportunities</p>
+                                <p class="text-2xl font-bold" id="job-count">Loading...</p>
+                            </div>
+                            <span class="material-icons text-green-200 text-2xl">trending_up</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-100">Part-time Range</p>
+                                <p class="text-2xl font-bold">Up to $30k</p>
+                            </div>
+                            <span class="material-icons text-blue-200 text-2xl">attach_money</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-100">Contract & Remote</p>
+                                <p class="text-2xl font-bold">100%</p>
+                            </div>
+                            <span class="material-icons text-purple-200 text-2xl">schedule</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="job-recommendations" class="space-y-4">
+                    <!-- Jobs will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize chart with dynamic data  
+        const currentBalance = {{ financial_data.current_balance | default(85000) }};
+        const monthlySavings = {{ (financial_data.monthly_income | default(7500)) - (financial_data.monthly_expenses | default(4200)) }};
+        const currentAge = {{ financial_data.user_age | default(35) }};
+        const retirementAge = 65;
+        const yearsToRetirement = retirementAge - currentAge;
+        const retirementGoal = 1500000; // $1.5M target
+        const cagr = 0.05; // 5% compound annual growth rate
+        
+        // Generate labels for years until retirement
+        const labels = [];
+        const yearIntervals = Math.max(1, Math.floor(yearsToRetirement / 10)); // Show ~10 points
+        for (let i = 0; i <= yearsToRetirement; i += yearIntervals) {
+            if (i === 0) {
+                labels.push(`Now (Age ${currentAge})`);
+            } else if (i >= yearsToRetirement) {
+                labels.push(`Retirement (Age ${retirementAge})`);
+                break;
+            } else {
+                labels.push(`${i} years (Age ${currentAge + i})`);
+            }
+        }
+        
+        // Calculate current trajectory with user's actual savings
+        const currentTrajectory = [];
+        let currentBalance_calc = currentBalance;
+        currentTrajectory.push(currentBalance_calc);
+        
+        for (let i = 1; i < labels.length; i++) {
+            const years = i * yearIntervals;
+            // Each year: previous balance grows by 5% + annual savings
+            for (let y = 0; y < yearIntervals; y++) {
+                currentBalance_calc = currentBalance_calc * (1 + cagr) + (monthlySavings * 12);
+            }
+            currentTrajectory.push(Math.round(currentBalance_calc));
+        }
+        
+        // Calculate required trajectory to reach $1.5M
+        const requiredTrajectory = [];
+        // Work backwards from $1.5M goal
+        let requiredBalance = retirementGoal;
+        const requiredData = [requiredBalance];
+        
+        // Calculate what balance is needed each year to reach $1.5M
+        for (let i = labels.length - 2; i >= 0; i--) {
+            const years = (labels.length - 1 - i) * yearIntervals;
+            // What balance do we need now to reach requiredBalance in 'years' years with 5% CAGR?
+            let tempBalance = requiredBalance;
+            for (let y = 0; y < yearIntervals; y++) {
+                tempBalance = (tempBalance - (monthlySavings * 12)) / (1 + cagr);
+            }
+            requiredData.unshift(Math.round(Math.max(0, tempBalance)));
+            requiredBalance = tempBalance;
+        }
+        
+        const ctx = document.getElementById('retirementChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Your Current Path',
+                    data: currentTrajectory,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 3
+                }, {
+                    label: 'Required for $1.5M Goal',
+                    data: requiredData,
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 3,
+                    borderDash: [5, 5]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + (context.parsed.y / 1000).toFixed(0) + 'k';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) {
+                                    return '$' + (value / 1000000).toFixed(1) + 'M';
+                                } else {
+                                    return '$' + (value / 1000).toFixed(0) + 'k';
+                                }
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+
+        // Chat functionality
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage('user', message);
+            input.value = '';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                addMessage('ai', data.response || 'Sorry, I encountered an error.');
+            } catch (error) {
+                addMessage('ai', 'Sorry, I encountered an error. Please try again.');
+            }
+        }
+
+        function addMessage(type, content) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            
+            if (type === 'user') {
+                messageDiv.className = 'flex items-start space-x-3 flex-row-reverse space-x-reverse';
+                messageDiv.innerHTML = `
+                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                        <span class="material-icons text-gray-600 text-xs">person</span>
+                    </div>
+                    <div class="max-w-[80%] p-4 rounded-lg bg-blue-600 text-white">
+                        <p class="text-sm leading-relaxed">${content}</p>
+                    </div>
+                `;
+            } else {
+                messageDiv.className = 'flex items-start space-x-3';
+                messageDiv.innerHTML = `
+                    <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                        <span class="material-icons text-white text-xs">smart_toy</span>
+                    </div>
+                    <div class="max-w-[80%] p-4 rounded-lg bg-gray-50 border border-gray-200">
+                        <p class="text-sm leading-relaxed">${content}</p>
+                    </div>
+                `;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Job recommendations functionality
+        async function refreshJobs() {
+            const jobContainer = document.getElementById('job-recommendations');
+            jobContainer.innerHTML = '<div class="text-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div><p class="text-gray-600 mt-2">Loading fresh opportunities...</p></div>';
+            
+            try {
+                const response = await fetch('/api/jobs');
+                const data = await response.json();
+                displayJobs(data.jobs || []);
+            } catch (error) {
+                console.error('Error refreshing jobs:', error);
+                jobContainer.innerHTML = '<div class="text-center py-8 text-red-600">Error loading jobs. Please try again.</div>';
+            }
+        }
+
+        function displayJobs(jobs) {
+            const jobContainer = document.getElementById('job-recommendations');
+            const jobCountEl = document.getElementById('job-count');
+            
+            jobCountEl.textContent = jobs.length + ' jobs';
+            
+            if (jobs.length === 0) {
+                jobContainer.innerHTML = `
+                    <div class="text-center py-12">
+                        <span class="material-icons text-gray-400 text-4xl">work_off</span>
+                        <p class="text-gray-600 mt-4">No jobs available at the moment. Try refreshing later.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            jobContainer.innerHTML = jobs.map(job => `
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <h3 class="text-xl font-semibold text-gray-900">${job.title || 'Job Title'}</h3>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                    ${job.type || 'Full-time'}
+                                </span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                                <span class="font-medium">${job.company || 'Company'}</span>
+                                <div class="flex items-center space-x-1">
+                                    <span class="material-icons text-xs">location_on</span>
+                                    <span>${job.location || 'Location'}</span>
+                                </div>
+                                <span>${job.posted || 'Recently posted'}</span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-6 mb-4">
+                                <div class="flex items-center space-x-1">
+                                    <span class="material-icons text-green-600 text-sm">attach_money</span>
+                                    <span class="text-sm font-medium text-gray-900">${job.salary || 'Competitive'}</span>
+                                </div>
+                            </div>
+                            
+                            <p class="text-sm text-gray-600 mb-4">${job.description || 'Job description not available'}</p>
+                        </div>
+                        
+                        ${job.url ? `
+                            <a href="${job.url}" target="_blank" class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                <span>View Job</span>
+                                <span class="material-icons text-sm">open_in_new</span>
+                            </a>
+                        ` : `
+                            <button class="flex items-center space-x-2 bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed">
+                                <span>No Link</span>
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function refreshData() {
+            location.reload();
+        }
+
+        // Load jobs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshJobs();
+        });
+    </script>
+</body>
+</html>

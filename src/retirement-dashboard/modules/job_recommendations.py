@@ -27,11 +27,12 @@ class JobRecommendations:
     
     def __init__(self):
         """Initialize the job recommendations service"""
-        self.app_id = os.getenv('ADZUNA_APP_ID')
-        self.app_key = os.getenv('ADZUNA_APP_KEY')
+        self.logger = logging.getLogger(__name__)
+        self.adzuna_app_id = os.getenv('ADZUNA_APP_ID')
+        self.adzuna_app_key = os.getenv('ADZUNA_APP_KEY')
         self.base_url = "https://api.adzuna.com/v1/api/jobs"
         
-        if not self.app_id or not self.app_key:
+        if not self.adzuna_app_id or not self.adzuna_app_key:
             logger.warning("Adzuna API credentials not found. Job recommendations will use mock data.")
             self.mock_mode = True
         else:
@@ -316,15 +317,169 @@ class JobRecommendations:
                 'contract_type': 'permanent'
             }
         ]
+    
+    def get_job_recommendations(self):
+        """
+        Get fresh job recommendations with higher income potential.
         
-        return {
-            'total_jobs': len(mock_jobs),
-            'jobs': mock_jobs,
-            'income_potential': {
-                'average_increase': 35.0,
-                'max_increase': 45.0,
-                'high_potential_jobs': 2
+        Returns:
+            list: List of job recommendations
+        """
+        try:
+            if self.adzuna_app_id and self.adzuna_app_key:
+                # Try to get real jobs from Adzuna API
+                real_jobs = self._fetch_adzuna_jobs()
+                if real_jobs:
+                    return real_jobs
+        except Exception as e:
+            self.logger.error(f"Error fetching from Adzuna API: {str(e)}")
+        
+        # Fallback to enhanced mock jobs for the dashboard
+        return [
+            {
+                'title': 'Senior Software Engineer',
+                'company': 'TechCorp Inc.',
+                'description': 'Lead development of cloud-native applications with modern frameworks...',
+                'salary': '$95,000 - $140,000',
+                'location': 'San Francisco, CA (Remote Available)'
             },
-            'top_skills': ['Python', 'AWS', 'Machine Learning', 'SQL', 'Docker'],
-            'career_paths': self._suggest_career_paths(current_income, desired_income)
-        }
+            {
+                'title': 'Financial Data Analyst',
+                'company': 'InvestmentFirm LLC',
+                'description': 'Analyze market trends and create financial models for investment decisions...',
+                'salary': '$75,000 - $110,000',
+                'location': 'New York, NY'
+            },
+            {
+                'title': 'Product Marketing Manager',
+                'company': 'StartupX',
+                'description': 'Drive product marketing strategy and lead go-to-market initiatives...',
+                'salary': '$85,000 - $120,000',
+                'location': 'Austin, TX (Hybrid)'
+            },
+            {
+                'title': 'DevOps Consultant',
+                'company': 'CloudSolutions Co.',
+                'description': 'Contract role helping enterprises migrate to cloud infrastructure...',
+                'salary': '$90 - $150/hour',
+                'location': 'Remote'
+            },
+            {
+                'title': 'Business Intelligence Analyst',
+                'company': 'DataCorp',
+                'description': 'Create dashboards and analytics to drive business decision making...',
+                'salary': '$70,000 - $100,000',
+                'location': 'Seattle, WA'
+            },
+            {
+                'title': 'Content Strategy Director',
+                'company': 'MediaGroup',
+                'description': 'Lead content strategy across multiple digital platforms and channels...',
+                'salary': '$80,000 - $115,000',
+                'location': 'Los Angeles, CA'
+            }
+        ]
+    
+    def _fetch_adzuna_jobs(self):
+        """Fetch jobs from the real Adzuna API"""
+        try:
+            jobs = []
+            
+            # Search for high-paying tech jobs (full-time)
+            tech_jobs = self._search_adzuna_api("software engineer", 80000)
+            jobs.extend(tech_jobs[:3])
+            
+            # Search for tech contract jobs
+            tech_contract = self._search_adzuna_api("software engineer", 70000, contract=True)
+            jobs.extend(tech_contract[:2])
+            
+            # Search for finance jobs
+            finance_jobs = self._search_adzuna_api("financial analyst", 70000)
+            jobs.extend(finance_jobs[:2])
+            
+            # Search for management positions
+            mgmt_jobs = self._search_adzuna_api("manager", 90000)
+            jobs.extend(mgmt_jobs[:2])
+            
+            # Search for consulting/contract opportunities
+            consulting_jobs = self._search_adzuna_api("consultant", 80000, contract=True)
+            jobs.extend(consulting_jobs[:2])
+            
+            # Search for data science roles
+            data_jobs = self._search_adzuna_api("data scientist", 85000)
+            jobs.extend(data_jobs[:2])
+            
+            # Remove duplicates based on title and company
+            seen = set()
+            unique_jobs = []
+            for job in jobs:
+                key = (job['title'].lower(), job['company'].lower())
+                if key not in seen:
+                    seen.add(key)
+                    unique_jobs.append(job)
+            
+            return unique_jobs[:15]  # Return top 15 unique jobs
+            
+        except Exception as e:
+            self.logger.error(f"Error in _fetch_adzuna_jobs: {str(e)}")
+            return []
+    
+    def _search_adzuna_api(self, query, min_salary=50000, contract=False):
+        """Search the Adzuna API for specific job types"""
+        try:
+            url = "https://api.adzuna.com/v1/api/jobs/us/search/1"
+            
+            # Always search for remote jobs
+            remote_query = f"{query} remote"
+            if contract:
+                remote_query += ' contract OR consultant OR freelance'
+            
+            params = {
+                'app_id': self.adzuna_app_id,
+                'app_key': self.adzuna_app_key,
+                'what': remote_query,
+                'salary_min': min_salary,
+                'results_per_page': 10,
+                'sort_by': 'salary'
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                jobs = []
+                
+                for job in data.get('results', []):
+                    salary_min = job.get('salary_min', 0)
+                    salary_max = job.get('salary_max', 0)
+                    
+                    if salary_max:
+                        salary_display = f"${salary_min:,.0f} - ${salary_max:,.0f}"
+                    elif salary_min:
+                        salary_display = f"${salary_min:,.0f}+"
+                    else:
+                        salary_display = "Competitive"
+                    
+                    # Determine job type based on title/description
+                    job_type = "Contract" if any(word in job.get('title', '').lower() or word in job.get('description', '').lower() 
+                                               for word in ['contract', 'consultant', 'freelance', 'contractor']) else "Full-time"
+                    
+                    jobs.append({
+                        'title': job.get('title', 'Unknown Title'),
+                        'company': job.get('company', {}).get('display_name', 'Unknown Company'),
+                        'description': (job.get('description', '')[:150] + '...') if job.get('description') else 'No description available',
+                        'salary': salary_display,
+                        'location': job.get('location', {}).get('display_name', 'Location not specified'),
+                        'type': job_type,
+                        'url': job.get('redirect_url', ''),  # Make jobs clickable
+                        'posted': job.get('created', 'Recently posted')
+                    })
+                
+                return jobs
+            else:
+                self.logger.warning(f"Adzuna API returned status {response.status_code}")
+                return []
+                
+        except Exception as e:
+            self.logger.error(f"Error searching Adzuna API: {str(e)}")
+            return []

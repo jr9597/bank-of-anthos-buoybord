@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: retirement-dashboard
+  labels:
+    app: retirement-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: retirement-dashboard
+  template:
+    metadata:
+      labels:
+        app: retirement-dashboard
+    spec:
+      containers:
+      - name: retirement-dashboard
+        image: gcr.io/gke10-hackathon-project/retirement-dashboard:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: PORT
+          value: "8000"
+        - name: FRONTEND_URL
+          value: "http://35.223.244.237"
+        - name: GOOGLE_AI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: retirement-dashboard-secrets
+              key: GOOGLE_AI_API_KEY
+        - name: ADZUNA_APP_ID
+          valueFrom:
+            secretKeyRef:
+              name: retirement-dashboard-secrets
+              key: ADZUNA_APP_ID
+        - name: ADZUNA_APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: retirement-dashboard-secrets
+              key: ADZUNA_APP_KEY
+        # Bank of Anthos service configuration
+        envFrom:
+        - configMapRef:
+            name: environment-config
+        - configMapRef:
+            name: service-api-config
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10

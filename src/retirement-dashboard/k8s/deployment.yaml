@@ -72,13 +72,6 @@ spec:
           value: "Bank of Anthos"
         - name: FRONTEND_URL
           value: "http://frontend:8080"
-        envFrom:
-        - configMapRef:
-            name: environment-config
-            optional: true
-        - configMapRef:
-            name: service-api-config
-            optional: true
         resources:
           requests:
             cpu: 50m
@@ -107,22 +100,6 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: var-log
-          mountPath: /var/log
-        - name: publickey
-          mountPath: /tmp/keys
-          readOnly: true
-      volumes:
-      - name: tmp
-        emptyDir: {}
-      - name: var-log
-        emptyDir: {}
-      - name: publickey
-        secret:
-          secretName: jwt-key
           items:
           - key: jwtRS256.key.pub
             path: publickey

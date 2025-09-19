@@ -168,7 +168,8 @@ def create_app():
                                platform=platform,
                                platform_display_name=platform_display_name,
                                pod_name=pod_name,
-                               pod_zone=pod_zone)
+                               pod_zone=pod_zone,
+                               retirement_dashboard_url=os.getenv('RETIREMENT_DASHBOARD_URL', 'http://35.225.65.169'))
 
     def _populate_contact_labels(account_id, transactions, contacts):
         """
@@ -629,12 +630,12 @@ def create_app():
         # Get retirement dashboard URL from environment or use default
         retirement_dashboard_url = os.getenv('RETIREMENT_DASHBOARD_URL', 'http://retirement-dashboard:8080')
         
-        app.logger.info('Redirecting to retirement dashboard.')
+        app.logger.info(f'Redirecting to retirement dashboard with token: {token[:20]}...')
         
-        # Create response with redirect and pass the authentication token
-        resp = make_response(redirect(retirement_dashboard_url))
-        # The retirement dashboard will read the token from the cookie
-        return resp
+        # Pass the authentication token as a URL parameter since cookies don't work across domains
+        redirect_url = f"{retirement_dashboard_url}?token={token}"
+        
+        return redirect(redirect_url)
 
     def decode_token(token):
         return jwt.decode(algorithms='RS256',

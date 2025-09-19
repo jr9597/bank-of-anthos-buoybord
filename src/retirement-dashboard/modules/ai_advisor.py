@@ -28,14 +28,19 @@ class AIAdvisor:
     
     def __init__(self):
         """Initialize the AI advisor with Google Gemini"""
+        self.logger = logging.getLogger(__name__)
         try:
             # Configure Google Generative AI
-            api_key = os.getenv('GOOGLE_AI_API_KEY')
-            if not api_key:
+            self.google_ai_api_key = os.getenv('GOOGLE_AI_API_KEY')
+            # Configure Adzuna API for job search tool
+            self.adzuna_app_id = os.getenv('ADZUNA_APP_ID')
+            self.adzuna_app_key = os.getenv('ADZUNA_APP_KEY')
+            
+            if not self.google_ai_api_key:
                 logger.warning("GOOGLE_AI_API_KEY not found. AI features will be limited.")
                 self.model = None
             else:
-                genai.configure(api_key=api_key)
+                genai.configure(api_key=self.google_ai_api_key)
                 self.model = genai.GenerativeModel('gemini-1.5-flash')
                 logger.info("Google Gemini initialized successfully")
         except Exception as e:
@@ -316,3 +321,244 @@ class AIAdvisor:
                 'timeframe': 'Long-term'
             }
         ]
+    
+    def get_chat_response(self, message, financial_data=None):
+        """
+        Get AI chat response for retirement planning questions with personalized context.
+        
+        Args:
+            message (str): User's question or message
+            financial_data (dict): User's financial data for personalized advice
+            
+        Returns:
+            str: AI-generated response
+        """
+        try:
+            if not self.google_ai_api_key:
+                return self._get_mock_chat_response(message, financial_data)
+            
+            # Configure the Gemini API
+            genai.configure(api_key=self.google_ai_api_key)
+            
+            # Create a personalized retirement-focused prompt
+            context = ""
+            if financial_data:
+                context = f"""
+                
+                User's Financial Context:
+                - Current Balance: ${financial_data.get('current_balance', 0):,.2f}
+                - Monthly Income: ${financial_data.get('monthly_income', 0):,.2f}
+                - Monthly Expenses: ${financial_data.get('monthly_expenses', 0):,.2f}
+                - Net Monthly Savings: ${(financial_data.get('monthly_income', 0) - financial_data.get('monthly_expenses', 0)):,.2f}
+                - Annual Income: ${financial_data.get('current_income', 0):,.2f}
+                """
+            
+            system_prompt = f"""You are a professional financial advisor specializing in retirement planning. 
+            You provide helpful, accurate, and personalized advice about retirement savings, investment strategies, 
+            and financial planning. Always be encouraging and provide actionable advice. Keep responses concise 
+            but informative and specific to the user's situation.{context}
+            
+            Base your advice on their actual financial situation when available. Provide specific numbers and actionable steps."""
+            
+            full_prompt = f"{system_prompt}\n\nUser question: {message}\n\nResponse:"
+            
+            # Generate AI response
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(full_prompt)
+            
+            return response.text.strip()
+            
+        except Exception as e:
+            self.logger.error(f"Error getting AI chat response: {str(e)}")
+            return self._get_mock_chat_response(message, financial_data)
+    
+    def search_jobs_with_ai(self, message, financial_data=None):
+        """
+        Enhanced chat response that can search for jobs using Adzuna API as a tool.
+        
+        Args:
+            message (str): User's message potentially requesting job search
+            financial_data (dict): User's financial data for context
+            
+        Returns:
+            dict: Response with text and optionally job results
+        """
+        try:
+            # Check if user is asking about jobs
+            job_keywords = ['job', 'career', 'work', 'salary', 'employment', 'hiring', 'position', 'opportunity']
+            is_job_request = any(keyword in message.lower() for keyword in job_keywords)
+            
+            if not is_job_request:
+                # Regular chat response
+                return {
+                    'response': self.get_chat_response(message, financial_data),
+                    'jobs': None
+                }
+            
+            # Extract job search criteria from the message
+            search_criteria = self._extract_job_criteria(message, financial_data)
+            
+            # Search for jobs
+            jobs = self._search_adzuna_jobs(search_criteria)
+            
+            # Generate AI response with job context
+            job_context = f"\n\nI found {len(jobs)} relevant job opportunities for you:" if jobs else "\n\nI couldn't find specific jobs matching your criteria, but here's some advice:"
+            
+            if not self.google_ai_api_key:
+                response_text = self._get_mock_job_response(message, financial_data, jobs)
+            else:
+                # Create enhanced prompt with job search context
+                context = ""
+                if financial_data:
+                    context = f"""
+                    User's Financial Context:
+                    - Current Balance: ${financial_data.get('current_balance', 0):,.2f}
+                    - Monthly Income: ${financial_data.get('monthly_income', 0):,.2f}
+                    - Monthly Expenses: ${financial_data.get('monthly_expenses', 0):,.2f}
+                    """
+                
+                job_info = ""
+                if jobs:
+                    job_info = f"\n\nI searched for jobs and found {len(jobs)} opportunities. The jobs include positions like: " + ", ".join([job['title'] for job in jobs[:3]])
+                
+                system_prompt = f"""You are a professional financial advisor and career counselor. 
+                The user asked about jobs/career opportunities for retirement planning.{context}{job_info}
+                
+                Provide helpful advice about career growth, salary negotiations, and how career changes can impact retirement planning.
+                If jobs were found, reference them and provide specific advice. Be encouraging and actionable."""
+                
+                full_prompt = f"{system_prompt}\n\nUser question: {message}\n\nResponse:"
+                
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content(full_prompt)
+                response_text = response.text.strip()
+            
+            return {
+                'response': response_text + job_context,
+                'jobs': jobs
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error in AI job search: {str(e)}")
+            return {
+                'response': "I'd be happy to help you explore career opportunities! Could you tell me more about what type of jobs you're interested in?",
+                'jobs': None
+            }
+    
+    def _extract_job_criteria(self, message, financial_data):
+        """Extract job search criteria from user message"""
+        message_lower = message.lower()
+        
+        # Default criteria
+        criteria = {
+            'query': 'remote',
+            'salary_min': 50000,
+            'location': 'remote'
+        }
+        
+        # Extract job types from message
+        if 'software' in message_lower or 'developer' in message_lower or 'engineer' in message_lower:
+            criteria['query'] = 'remote software engineer developer'
+        elif 'finance' in message_lower or 'analyst' in message_lower:
+            criteria['query'] = 'remote financial analyst finance'
+        elif 'data' in message_lower or 'scientist' in message_lower:
+            criteria['query'] = 'remote data scientist analytics'
+        elif 'manager' in message_lower or 'management' in message_lower:
+            criteria['query'] = 'remote manager management'
+        elif 'consultant' in message_lower or 'consulting' in message_lower:
+            criteria['query'] = 'remote consultant consulting'
+        
+        # Extract salary expectations from financial data
+        if financial_data:
+            current_income = financial_data.get('current_income', 0)
+            if current_income > 0:
+                criteria['salary_min'] = max(current_income, 50000)
+        
+        return criteria
+    
+    def _search_adzuna_jobs(self, criteria):
+        """Search Adzuna API for jobs"""
+        try:
+            if not self.adzuna_app_id or not self.adzuna_app_key:
+                self.logger.warning("Adzuna credentials not available for job search")
+                return []
+            
+            import requests
+            
+            url = "https://api.adzuna.com/v1/api/jobs/us/search/1"
+            params = {
+                'app_id': self.adzuna_app_id,
+                'app_key': self.adzuna_app_key,
+                'what': f"remote part-time contract {criteria.get('query', 'software engineer developer')}",  # Focus on part-time/contract
+                'salary_min': 0,        # Start from $0 for part-time work
+                'salary_max': 30000,    # Cap at $30k for part-time jobs
+                'results_per_page': 8,
+                'sort_by': 'salary'
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            self.logger.info(f"Adzuna job search response: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                adzuna_jobs = data.get('results', [])
+                
+                jobs = []
+                for job in adzuna_jobs[:5]:
+                    salary_min = job.get('salary_min', 0)
+                    salary_max = job.get('salary_max', 0)
+                    
+                    if salary_max:
+                        salary_display = f"${salary_min:,.0f} - ${salary_max:,.0f}"
+                    elif salary_min:
+                        salary_display = f"${salary_min:,.0f}+"
+                    else:
+                        salary_display = "Competitive"
+                    
+                    jobs.append({
+                        'title': job.get('title', 'Unknown Title'),
+                        'company': job.get('company', {}).get('display_name', 'Unknown Company'),
+                        'description': (job.get('description', '')[:150] + '...') if job.get('description') else 'No description available',
+                        'salary': salary_display,
+                        'location': job.get('location', {}).get('display_name', 'Remote'),
+                        'type': 'Remote',
+                        'url': job.get('redirect_url', ''),
+                        'posted': job.get('created', 'Recently posted')
+                    })
+                
+                self.logger.info(f"Found {len(jobs)} jobs via AI tool calling")
+                return jobs
+            else:
+                self.logger.warning(f"Adzuna API returned {response.status_code}")
+                return []
+                
+        except Exception as e:
+            self.logger.error(f"Error searching jobs: {str(e)}")
+            return []
+    
+    def _get_mock_job_response(self, message, financial_data, jobs):
+        """Generate mock response for job-related queries"""
+        if jobs:
+            return f"I found some great opportunities for you! Based on your request about jobs, I've identified {len(jobs)} positions that could help boost your retirement savings. These roles offer competitive salaries that could significantly accelerate your retirement timeline."
+        else:
+            return "I'd love to help you find career opportunities to boost your retirement savings! Try asking me about specific job types like 'software engineer jobs' or 'remote analyst positions' and I'll search for opportunities that match your income goals."
+    
+    def _get_mock_chat_response(self, message, financial_data=None):
+        """Get mock chat response when AI is not available"""
+        # Simple keyword-based responses with financial context
+        message_lower = message.lower()
+        
+        # Use financial data for more personalized mock responses
+        monthly_savings = 0
+        if financial_data:
+            monthly_savings = financial_data.get('monthly_income', 0) - financial_data.get('monthly_expenses', 0)
+        if 'savings' in message_lower or 'save' in message_lower:
+            return "Consistent savings are the foundation of retirement planning. I recommend automating your savings and gradually increasing your contribution rate as your income grows."
+        elif 'investment' in message_lower or 'invest' in message_lower:
+            return "Diversified investing is key for retirement. Consider a mix of stocks, bonds, and other assets appropriate for your age and risk tolerance. The earlier you start, the more time compound interest has to work for you."
+        elif 'goal' in message_lower or 'target' in message_lower:
+            return "Setting clear retirement goals is crucial! A common rule of thumb is to aim for 10-12 times your annual income by retirement age. Break this down into smaller, achievable milestones."
+        elif 'age' in message_lower or 'when' in message_lower:
+            return "The best time to start retirement planning is now! Whether you're 25 or 55, there are strategies that can help improve your retirement outlook. The key is to start where you are and build momentum."
+        else:
+            return "Great question! Retirement planning is personal and depends on your unique situation. Focus on building good financial habits: save consistently, invest wisely, and review your plan regularly."

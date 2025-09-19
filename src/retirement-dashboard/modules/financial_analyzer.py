@@ -29,6 +29,97 @@ class FinancialAnalyzer:
         """Initialize the financial analyzer"""
         self.logger = logging.getLogger(__name__)
     
+    def calculate_income_expenses(self, transactions: List[Dict], account_id: str) -> Tuple[float, float]:
+        """
+        Calculate monthly income and expenses from transaction history.
+        Simple approach: group by month, sum credits and debits.
+        
+        Args:
+            transactions: List of transaction records
+            account_id: User's account ID
+            
+        Returns:
+            Tuple of (monthly_income, monthly_expenses)
+        """
+        try:
+            if not transactions:
+                return 0.0, 0.0
+            
+            self.logger.info(f"Analyzing {len(transactions)} transactions for account {account_id}")
+            
+            # Group transactions by month
+            monthly_data = {}
+            
+            for transaction in transactions:
+                try:
+                    # Parse timestamp
+                    timestamp_str = transaction.get('timestamp', '')
+                    if '+' in timestamp_str:
+                        timestamp_str = timestamp_str.split('+')[0]
+                    
+                    # Handle different timestamp formats
+                    if 'T' in timestamp_str:
+                        if '.' in timestamp_str:
+                            trans_date = datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%S.%f')
+                        else:
+                            trans_date = datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%S')
+                    else:
+                        trans_date = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+                    
+                    # Get year-month key
+                    month_key = trans_date.strftime('%Y-%m')
+                    
+                    if month_key not in monthly_data:
+                        monthly_data[month_key] = {'credits': 0.0, 'debits': 0.0}
+                    
+                    # Convert amount from cents to dollars
+                    amount = float(transaction.get('amount', 0)) / 100.0
+                    to_account = transaction.get('toAccountNum', '')
+                    from_account = transaction.get('fromAccountNum', '')
+                    
+                    # Simple logic: money coming TO this account = credit, money going FROM this account = debit
+                    if to_account == account_id:
+                        monthly_data[month_key]['credits'] += amount
+                        self.logger.debug(f"{month_key}: Credit ${amount:.2f} from {from_account}")
+                    elif from_account == account_id:
+                        monthly_data[month_key]['debits'] += amount
+                        self.logger.debug(f"{month_key}: Debit ${amount:.2f} to {to_account}")
+                        
+                except (ValueError, TypeError) as e:
+                    self.logger.warning(f"Error processing transaction: {e}")
+                    continue
+            
+            # Get the latest month (or up to 5 months)
+            sorted_months = sorted(monthly_data.keys(), reverse=True)
+            
+            if not sorted_months:
+                return 0.0, 0.0
+            
+            # Use the latest month for calculation
+            latest_month = sorted_months[0]
+            month_data = monthly_data[latest_month]
+            
+            monthly_income = month_data['credits']
+            monthly_expenses = month_data['debits']
+            
+            self.logger.info(f"Latest month {latest_month}:")
+            self.logger.info(f"  Credits (income): ${monthly_income:.2f}")
+            self.logger.info(f"  Debits (expenses): ${monthly_expenses:.2f}")
+            self.logger.info(f"  Net savings: ${monthly_income - monthly_expenses:.2f}")
+            
+            # If we have multiple months, log them for debugging
+            if len(sorted_months) > 1:
+                self.logger.info(f"Other months available: {sorted_months[1:6]}")  # Show up to 5 more months
+                for month in sorted_months[1:6]:
+                    data = monthly_data[month]
+                    self.logger.info(f"  {month}: Credits ${data['credits']:.2f}, Debits ${data['debits']:.2f}")
+            
+            return monthly_income, monthly_expenses
+            
+        except Exception as e:
+            self.logger.error(f"Error calculating income/expenses: {e}")
+            return 0.0, 0.0
+    
     def analyze_financial_health(self, financial_data: Dict) -> Dict:
         """Analyze overall financial health and provide metrics"""
         try:
