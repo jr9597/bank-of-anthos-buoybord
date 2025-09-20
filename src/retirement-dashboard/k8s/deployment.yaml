@@ -40,8 +40,8 @@ spec:
         runAsUser: 1000
       containers:
       - name: retirement-dashboard
-        image: retirement-dashboard:latest
-        imagePullPolicy: Never
+        image: us-central1-docker.pkg.dev/gke10-hackathon-project/bank-of-anthos/retirement-dashboard:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
           name: http-server
@@ -100,6 +100,3 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-          items:
-          - key: jwtRS256.key.pub
-            path: publickey

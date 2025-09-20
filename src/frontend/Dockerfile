@@ -35,6 +35,8 @@ ENV PYTHONUNBUFFERED=0
 ENV LOG_LEVEL info
 
 # Add application code.
+COPY templates/ ./templates/
+COPY templates/index.html ./templates/index.html
 COPY . .
 
 # Ensure files are readable for non-root users

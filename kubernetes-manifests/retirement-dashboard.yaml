@@ -40,7 +40,7 @@ spec:
         runAsUser: 1000
       containers:
       - name: retirement-dashboard
-        image: gcr.io/bank-of-anthos-ci/retirement-dashboard:v0.6.4
+        image: us-central1-docker.pkg.dev/gke10-hackathon-project/bank-of-anthos/retirement-dashboard:latest
         ports:
         - containerPort: 8000
           name: http-server
