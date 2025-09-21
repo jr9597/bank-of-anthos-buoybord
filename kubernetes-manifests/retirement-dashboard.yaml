@@ -41,6 +41,7 @@ spec:
       containers:
       - name: retirement-dashboard
         image: us-central1-docker.pkg.dev/gke10-hackathon-project/bank-of-anthos/retirement-dashboard:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
           name: http-server
@@ -49,24 +50,35 @@ spec:
           value: "v0.6.4"
         - name: PORT
           value: "8000"
+        - name: GOOGLE_AI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: retirement-dashboard-secrets
+              key: google-ai-api-key
+              optional: true
+        - name: ADZUNA_APP_ID
+          valueFrom:
+            secretKeyRef:
+              name: retirement-dashboard-secrets
+              key: adzuna-app-id
+              optional: true
+        - name: ADZUNA_APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: retirement-dashboard-secrets
+              key: adzuna-app-key
+              optional: true
         - name: BANK_NAME
           value: "Bank of Anthos"
         - name: FRONTEND_URL
           value: "http://frontend:8080"
-        envFrom:
-        - configMapRef:
-            name: environment-config
-            optional: true
-        - configMapRef:
-            name: service-api-config
-            optional: true
         resources:
           requests:
-            cpu: 100m
-            memory: 128Mi
+            cpu: 50m
+            memory: 64Mi
           limits:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 200m
+            memory: 256Mi
         readinessProbe:
           httpGet:
             path: /health
@@ -88,25 +100,6 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: var-log
-          mountPath: /var/log
-        - name: publickey
-          mountPath: /tmp/keys
-          readOnly: true
-      volumes:
-      - name: tmp
-        emptyDir: {}
-      - name: var-log
-        emptyDir: {}
-      - name: publickey
-        secret:
-          secretName: jwt-key
-          items:
-          - key: jwtRS256.key.pub
-            path: publickey
 ---
 apiVersion: v1
 kind: Service
@@ -115,7 +108,7 @@ metadata:
   labels:
     app: retirement-dashboard
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: retirement-dashboard
   ports:
