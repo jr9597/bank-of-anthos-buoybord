@@ -169,7 +169,7 @@ Technology: Adzuna REST API, Python Filtering, Dynamic DOM Updates
 - **`modules/job_recommendations.py`**: Adzuna API integration for job market data
 - **`modules/financial_analyzer.py`**: Financial calculations and projections
 - **`templates/`**: HTML templates with modern UI components
-- **`k8s/`**: Kubernetes deployment manifests
+- **`k8s/`**: Kubernetes deployment manifests (legacy - use `kubernetes-manifests/` in root)
 
 ## 🚀 Features
 
@@ -244,22 +244,27 @@ Technology: Adzuna REST API, Python Filtering, Dynamic DOM Updates
 
 ### Quick Deploy
 
-1. **Create Secrets**:
+1. **Deploy Everything Together** (Recommended):
    ```bash
-   kubectl create secret generic retirement-dashboard-secrets \
-     --from-literal=GOOGLE_AI_API_KEY=your_gemini_key \
-     --from-literal=ADZUNA_APP_ID=your_adzuna_id \
-     --from-literal=ADZUNA_APP_KEY=your_adzuna_key
+   # Deploy Bank of Anthos + Retirement Dashboard together
+   kubectl apply -f ./extras/jwt/jwt-secret.yaml
+   kubectl apply -f ./kubernetes-manifests/
    ```
 
-2. **Deploy the Service**:
+2. **Or Deploy Separately**:
    ```bash
-   kubectl apply -f src/retirement-dashboard/minimal-deployment.yaml
+   # First deploy Bank of Anthos
+   kubectl apply -f ./extras/jwt/jwt-secret.yaml
+   kubectl apply -f ./kubernetes-manifests/
+   
+   # Then deploy only the retirement dashboard
+   kubectl apply -f ./kubernetes-manifests/retirement-dashboard-secrets.yaml
+   kubectl apply -f ./kubernetes-manifests/retirement-dashboard.yaml
    ```
 
 3. **Access the Dashboard**:
    - Get the external IP: `kubectl get service retirement-dashboard`
-   - Access via Bank of Anthos frontend (recommended)
+   - Access via Bank of Anthos frontend (recommended): Click "Retirement Dashboard" button
    - Or directly via the service IP
 
 ### Development Setup

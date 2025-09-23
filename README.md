@@ -167,6 +167,8 @@ The following button opens up an interactive tutorial showing how to deploy Bank
    accounts-db-6f589464bc-6r7b7          1/1     Running   0          99s
    balancereader-797bf6d7c5-8xvp6        1/1     Running   0          99s
    contacts-769c4fb556-25pg2             1/1     Running   0          98s
+   frontend-xxx                           1/1     Running   0          98s
+   retirement-dashboard-xxx               1/1     Running   0          98s
    frontend-7c96b54f6b-zkdbz             1/1     Running   0          98s
    ledger-db-5b78474d4f-p6xcb            1/1     Running   0          98s
    ledgerwriter-84bf44b95d-65mqf         1/1     Running   0          97s
@@ -191,6 +193,22 @@ The following button opens up an interactive tutorial showing how to deploy Bank
    ```
 
    Deleting the cluster may take a few minutes.
+
+## 🚀 Retirement Dashboard Extension
+
+This repository includes an AI-powered retirement planning dashboard that extends Bank of Anthos with comprehensive financial planning capabilities:
+
+- **AI-Powered Advice**: Personalized retirement planning using Google Gemini AI
+- **Job Market Intelligence**: Real-time remote job opportunities via Adzuna API
+- **Financial Projections**: Interactive charts and goal tracking
+- **Seamless Integration**: Accessible via "Retirement Dashboard" button on the homepage
+
+The retirement dashboard is automatically deployed when you run:
+```bash
+kubectl apply -f ./kubernetes-manifests/
+```
+
+For detailed documentation, see [src/retirement-dashboard/README.md](src/retirement-dashboard/README.md).
 
 ## Additional deployment options
 
